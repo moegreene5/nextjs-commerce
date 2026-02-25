@@ -9,8 +9,8 @@ export interface IProfile extends ITimestamp {
   user_id: string;
   email: string;
   name: {
-    first: string;
-    last: string;
+    first_name: string;
+    last_name: string;
   };
   phone_number: string;
   username: string | null;

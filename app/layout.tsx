@@ -1,17 +1,13 @@
 import "./globals.css";
 
 import Footer from "@/components/footer";
+import Header from "@/components/header";
+import { getIsAuthenticated } from "@/features/auth/auth-queries";
+import { AuthProvider } from "@/features/auth/components/auth-provider";
+import Providers from "@/hooks/query-client-provider";
 import type { Metadata } from "next";
-import {
-  Albert_Sans,
-  Alegreya,
-  Geologica,
-  Josefin_Sans,
-  Lato,
-  Open_Sans,
-  Playfair_Display,
-  Raleway,
-} from "next/font/google";
+import { Geologica, Playfair_Display, Raleway } from "next/font/google";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: {
@@ -28,37 +24,11 @@ const raleway = Raleway({
   variable: "--raleway",
 });
 
-const alegreya = Alegreya({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  variable: "--alegreya",
-});
-
-const openSans = Open_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  variable: "--open-sans",
-});
-const albertSans = Albert_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  variable: "--albert-sans",
-});
 const PlayfairDisplay = Playfair_Display({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--playfair-display",
-});
-
-const josefinSans = Josefin_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  variable: "--josefin-sans",
 });
 
 const geologica = Geologica({
@@ -68,26 +38,28 @@ const geologica = Geologica({
   variable: "--geologica",
 });
 
-const lato = Lato({
-  subsets: ["latin"],
-  weight: ["300", "400", "700", "900"],
-  display: "swap",
-  style: ["normal", "italic"],
-  variable: "--lato_font",
-});
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const loggedIn = getIsAuthenticated();
+
   return (
     <html lang="en">
       <body
-        className={`${raleway.className} ${alegreya.variable} ${raleway.variable} ${lato.variable} ${openSans.variable} ${albertSans.variable} ${PlayfairDisplay.variable} ${josefinSans.variable} ${geologica.variable}`}
+        className={`${raleway.className} ${raleway.variable}  ${PlayfairDisplay.variable} ${geologica.variable}`}
       >
-        {children}
-        <Footer />
+        <Providers>
+          <AuthProvider loggedIn={loggedIn}>
+            <Toaster position="top-center" />
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              {children}
+              <Footer />
+            </div>
+          </AuthProvider>
+        </Providers>
       </body>
     </html>
   );

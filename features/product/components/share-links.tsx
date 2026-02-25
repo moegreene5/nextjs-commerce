@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FaWhatsapp } from "react-icons/fa";
 import { FiFacebook, FiLink, FiShare2, FiTwitter } from "react-icons/fi";
 
@@ -49,15 +49,13 @@ export function ShareLinks({ title, url }: ShareLinksProps) {
   };
 
   return (
-    <div className="flex items-center gap-3 mt-4 flex-wrap">
-      {/* Native Mobile Share */}
+    <div className="flex items-center gap-3 flex-wrap">
       {canShare && (
         <Button variant="outline" size="icon-lg" onClick={handleNativeShare}>
           <FiShare2 />
         </Button>
       )}
 
-      {/* Facebook */}
       <a
         href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
         target="_blank"
@@ -68,7 +66,6 @@ export function ShareLinks({ title, url }: ShareLinksProps) {
         </Button>
       </a>
 
-      {/* Twitter */}
       <a
         href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
         target="_blank"
@@ -79,7 +76,6 @@ export function ShareLinks({ title, url }: ShareLinksProps) {
         </Button>
       </a>
 
-      {/* WhatsApp */}
       <a
         href={`https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`}
         target="_blank"
@@ -90,7 +86,6 @@ export function ShareLinks({ title, url }: ShareLinksProps) {
         </Button>
       </a>
 
-      {/* Copy Link */}
       <Button variant="outline" size="icon-lg" onClick={handleCopy}>
         <FiLink />
       </Button>

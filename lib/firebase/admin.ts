@@ -28,11 +28,12 @@ export const store = adminApp?.firestore() || getFirestore();
 export const storage = adminApp?.storage() || getStorage();
 
 export const collections = {
-  profile: "/profile",
-  product: "/product",
-  cart: "/cart",
-  segment: "/segment",
-  brand_category: "/brand_category",
+  profile: "profile",
+  product: "product",
+  cart: "cart",
+  segment: "segment",
+  brand_category: "brand_category",
   category: "category",
   order: "order",
+  cartItems: "cartItems",
 };

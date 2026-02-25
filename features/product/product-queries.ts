@@ -8,13 +8,15 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 
 export const getProduct = cache(async (productId: string) => {
-  if (!productId || typeof productId !== "string") return notFound();
-
+  if (!productId || typeof productId !== "string") {
+    notFound();
+  }
   const productDoc = store.collection(collections.product).doc(productId);
-
   const product = (await productDoc.get()).data();
 
-  if (!product) return notFound();
+  if (!product) {
+    notFound();
+  }
 
   return {
     ...product,

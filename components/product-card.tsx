@@ -1,81 +1,121 @@
 "use client";
 
 import { Product } from "@/entities/product";
+import { addToCart } from "@/features/cart/cart-actions";
 import { cn } from "@/utils/cn";
+import { formatPrice } from "@/utils/format-price";
+import { cartQueryKey } from "@/utils/query-keys";
+import { useQueryClient } from "@tanstack/react-query";
+import { ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, ViewTransition } from "react";
-import { CgEye } from "react-icons/cg";
+import { useTransition } from "react";
+import { toast } from "sonner";
 
-interface Props {
-  classname?: string;
-  product: Product;
+export interface ProductCardProps
+  extends Pick<
+    Product,
+    "name" | "description" | "image" | "id" | "price" | "brand"
+  > {
+  className?: string;
 }
 
-const ProductCard = ({ classname, product }: Props) => {
-  const { image, id, price, name } = product;
-  const [transformOrigin, setTransformOrigin] =
-    useState<string>("center center");
+const ProductCard = ({
+  className,
+  name,
+  id,
+  image,
+  price,
+  brand,
+}: ProductCardProps) => {
+  const hasSecondImage = image.length > 1;
+  const queryClient = useQueryClient();
+  const [isPending, startTransition] = useTransition();
 
-  const handleMouseMove = (event: React.MouseEvent<HTMLImageElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    const xPercent = (x / rect.width) * 100;
-    const yPercent = (y / rect.height) * 100;
-    setTransformOrigin(`${xPercent}% ${yPercent}%`);
-  };
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
 
-  const handleMouseLeave = () => {
-    setTransformOrigin("center center");
+    startTransition(async () => {
+      const result = await addToCart({ productId: id, price, quantity: 1 });
+
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+
+      await queryClient.invalidateQueries({ queryKey: cartQueryKey });
+      toast.success("Added to cart");
+    });
   };
 
   return (
-    <ViewTransition name={`product-${id}`}>
-      <article
-        className={cn(
-          "h-full bg-[rgb(255,255,255)] p-2 md:p-3 xl:p-3.75 border border-[rgb(222,222,222)] max-w-87.5 overflow-hidden",
-          classname,
-        )}
-      >
+    <article
+      className={cn(
+        "group flex flex-col h-full overflow-hidden border border-stone-200 hover:border-stone-300 transition-all duration-300",
+        className,
+      )}
+    >
+      <div className="relative">
         <Link href={`/product/${id}`}>
-          <div className="py-1">
-            <div className="w-full max-w-[288px] mx-auto max-h-full bg-white flex items-center justify-center aspect-[4/3.8] overflow-hidden relative cursor-pointer">
+          <div className="aspect-square overflow-hidden m-auto">
+            <Image
+              src={image[0]}
+              alt={name}
+              fill
+              style={{ objectFit: "contain" }}
+              className={cn(
+                "transition-all duration-700 ease-out",
+                hasSecondImage
+                  ? "opacity-100 group-hover:opacity-0"
+                  : "group-hover:scale-105",
+              )}
+            />
+
+            {hasSecondImage && (
               <Image
+                src={image[1]}
+                alt={`${name} - alternate view`}
                 fill
-                src={image[0]}
-                alt={`product image ${name}`}
-                className="object-contain overflow-hidden transition-transform duration-2500 ease-in-out md:hover:scale-125"
-                style={{ transformOrigin }}
-                onMouseMove={handleMouseMove}
-                onMouseLeave={handleMouseLeave}
-                loading="lazy"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 280px"
+                style={{ objectFit: "contain" }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity duration-700 ease-out"
               />
-            </div>
+            )}
           </div>
         </Link>
-        <div className="pt-2 sm:pt-4 bg-white flex flex-col gap-2">
-          <Link
-            className="font-semibold text-borderColor truncate-multiline tracking-wide text-xs md:text-sm overflow-hidden"
-            href={`/products/${id}`}
+
+        <div className="hidden lg:block absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out">
+          <button
+            onClick={handleAddToCart}
+            disabled={isPending}
+            className={cn(
+              "w-full flex items-center justify-center gap-2 bg-white/80 backdrop-blur-sm text-stone-700 text-xs tracking-widest uppercase font-medium py-2.5 px-4 border border-stone-200 transition-colors duration-200",
+              isPending
+                ? "opacity-60 cursor-not-allowed"
+                : "hover:bg-white hover:text-stone-900 hover:border-stone-300",
+            )}
           >
+            <ShoppingBag className="w-3.5 h-3.5" />
+            {isPending ? "Adding..." : "Add to cart"}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 p-2 sm:p-4 h-full justify-between">
+        <div className="space-y-3">
+          <span className="text-[10px] sm:text-xs tracking-widest uppercase text-stone-400 font-medium">
+            {brand}
+          </span>
+
+          <h3 className="text-stone-800 text-xs sm:text-sm font-semibold leading-snug">
             {name}
-          </Link>
-          <div className="w-full pt-2 pb-2 font-medium text-balance text-left text-xs flex items-center justify-between gap-4 flex-wrap transition-colors duration-300 ease-in-out">
-            <div className="flex gap-2 items-center flex-nowrap ml-auto">
-              <button
-                title="Quick View"
-                aria-label="Quick View"
-                className="hidden xlli:block"
-              >
-                <CgEye className="text-primary text-sm md:text-base hover:text-[#050505] transition-all duration-300" />
-              </button>
-            </div>
+          </h3>
+
+          <div className="text-stone-700 text-xs sm:text-sm font-medium font-geologica">
+            {formatPrice(price)}
           </div>
         </div>
-      </article>
-    </ViewTransition>
+      </div>
+    </article>
   );
 };
 

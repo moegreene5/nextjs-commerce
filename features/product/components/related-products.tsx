@@ -7,14 +7,16 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getRelatedProducts } from "../product-queries";
 import { cn } from "@/utils/cn";
+import { getRelatedProducts } from "../product-queries";
 
 type Props = {
-  productId: string;
+  params: Promise<{ id: string }>;
 };
 
-export default async function RelatedProducts({ productId }: Props) {
+export default async function RelatedProducts({ params }: Props) {
+  const productId = (await params).id;
+
   const relatedProducts = await getRelatedProducts(productId);
 
   return (
@@ -24,22 +26,21 @@ export default async function RelatedProducts({ productId }: Props) {
         containScroll: "keepSnaps",
         dragFree: true,
         slidesToScroll: "auto",
-        loop: true,
         align: "start",
       }}
     >
-      <div className="flex gap-2 justify-end">
+      <div className="flex gap-2 justify-end px-page">
         <CarouselPrevious className="hidden static lg:flex" />
         <CarouselNext className="hidden static lg:flex" />
       </div>
 
-      <CarouselContent>
+      <CarouselContent className="mx-page">
         {relatedProducts.map((product) => (
           <CarouselItem
             className="basis-[50%] x410:basis-[45%] sm:basis-[40%] lg:basis-[25%]"
             key={product.id}
           >
-            <ProductCard product={product} />
+            <ProductCard {...product} />
           </CarouselItem>
         ))}
       </CarouselContent>
@@ -49,7 +50,7 @@ export default async function RelatedProducts({ productId }: Props) {
 
 export function RelatedProductsSkeleton() {
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-4 overflow-hidden">
       {Array.from({ length: 4 }).map((_, i) => (
         <div
           key={i}
