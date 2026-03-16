@@ -1,6 +1,13 @@
 "use server";
 
+import {
+  ActionResult,
+  GENERIC_LOGIN_ERROR,
+  SERVER_ERROR,
+} from "@/entities/action";
+import { Profile } from "@/entities/user";
 import { auth, collections, store } from "@/lib/firebase/admin";
+import { signInWithEmailPassword } from "@/lib/firebase/sign-in";
 import { sendEmail } from "@/lib/mail";
 import {
   createUserSession,
@@ -19,17 +26,6 @@ import { Route } from "next";
 import { cookies } from "next/headers";
 import { redirect, RedirectType } from "next/navigation";
 import { mergeGuestCartToUser } from "../cart/cart-actions";
-import { Profile } from "@/entities/user";
-
-type ActionResult =
-  | { success: true }
-  | { success: false; type: "validation"; fields: Record<string, string[]> }
-  | { success: false; type: "auth"; message: string }
-  | { success: false; type: "server"; message: string }
-  | { success: false; type: "unknown"; message: string };
-
-const SERVER_ERROR = "Internal server error";
-const GENERIC_LOGIN_ERROR = "Invalid email or password";
 
 export async function registerCustomer(
   data: RegisterData,
@@ -49,6 +45,8 @@ export async function registerCustomer(
 
   const profileRef = store.collection("profile");
   let firebaseUser: UserRecord | undefined;
+  let signInResult: Awaited<ReturnType<typeof signInWithEmailPassword>> | null =
+    null;
 
   try {
     const existing = await profileRef.where("email", "==", email).get();
@@ -83,27 +81,7 @@ export async function registerCustomer(
 
     await profileRef.doc(firebaseUser.uid).set(profileData);
 
-    const res = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, returnSecureToken: true }),
-      },
-    );
-
-    if (!res.ok) {
-      return { success: false, type: "server", message: SERVER_ERROR };
-    }
-
-    const { idToken } = await res.json();
-
-    if (!idToken) {
-      return { success: false, type: "server", message: SERVER_ERROR };
-    }
-
-    await createUserSession(idToken, await cookies());
-    await mergeGuestCartToUser(firebaseUser.uid);
+    signInResult = await signInWithEmailPassword(email, password);
   } catch (err: unknown) {
     if (firebaseUser?.uid) {
       try {
@@ -114,6 +92,13 @@ export async function registerCustomer(
     console.error("Register error:", err);
     return { success: false, type: "server", message: SERVER_ERROR };
   }
+
+  if (!signInResult?.success) {
+    redirect("/account/login?reason=registered", RedirectType.replace);
+  }
+
+  await mergeGuestCartToUser(signInResult.uid);
+  await createUserSession(signInResult.idToken, await cookies());
 
   redirect("/", RedirectType.replace);
 }
@@ -135,16 +120,15 @@ export async function logIn(
   const { email, password } = loginData.data;
 
   try {
-    let authUser;
-    try {
-      authUser = await auth.getUserByEmail(email);
-    } catch {
-      return { success: false, type: "auth", message: GENERIC_LOGIN_ERROR };
+    const signIn = await signInWithEmailPassword(email, password);
+
+    if (!signIn.success) {
+      return { success: false, type: "auth", message: signIn.message };
     }
 
-    const profileRef = store.collection(collections.profile);
-    const docRef = profileRef.doc(authUser.uid);
-    const userProfile = (await docRef.get()).data() as Profile;
+    const userProfile = (
+      await store.collection(collections.profile).doc(signIn.uid).get()
+    ).data() as Profile;
 
     if (!userProfile) {
       return { success: false, type: "auth", message: GENERIC_LOGIN_ERROR };
@@ -158,51 +142,8 @@ export async function logIn(
       };
     }
 
-    const res = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, returnSecureToken: true }),
-      },
-    );
-
-    if (!res.ok) {
-      const errorBody = await res.json();
-      const message = errorBody?.error?.message;
-
-      const isAuthError =
-        message === "INVALID_PASSWORD" ||
-        message === "EMAIL_NOT_FOUND" ||
-        message === "USER_DISABLED";
-      return {
-        success: false,
-        type: "auth",
-        message: isAuthError
-          ? GENERIC_LOGIN_ERROR
-          : message || GENERIC_LOGIN_ERROR,
-      };
-    }
-
-    const { idToken } = await res.json();
-
-    if (!idToken) {
-      return { success: false, type: "server", message: SERVER_ERROR };
-    }
-
-    const decoded = await auth.verifyIdToken(idToken);
-    const nowInSeconds = Math.floor(Date.now() / 1000);
-
-    if (nowInSeconds - decoded.auth_time > 5 * 60) {
-      return {
-        success: false,
-        type: "auth",
-        message: "Recent sign-in required. Please try again.",
-      };
-    }
-
-    await createUserSession(idToken, await cookies());
-    await mergeGuestCartToUser(authUser.uid);
+    await mergeGuestCartToUser(signIn.uid);
+    await createUserSession(signIn.idToken, await cookies());
   } catch (error) {
     console.error("Login error:", error);
     return { success: false, type: "server", message: SERVER_ERROR };

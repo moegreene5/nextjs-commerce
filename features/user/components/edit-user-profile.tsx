@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Profile } from "@/entities/user";
 import { useAppForm } from "@/hooks/form";
 import { userRegisterSchema } from "@/schema/register.schema";
-import { Save } from "lucide-react";
 import { SetStateAction } from "react";
+import { toast } from "sonner";
+import { updateUserProfile } from "../user-action";
 import { Views } from "./user-account-information";
 
 const FORM_ID = "edit-user-profile-form";
@@ -28,7 +29,26 @@ export function EditUserProfile({ profile, setView }: UserProfileProps) {
     validators: {
       onChange: userRegisterSchema,
       onChangeAsyncDebounceMs: 500,
-      onSubmitAsync: async ({ value }) => {},
+      onSubmitAsync: async ({ value }) => {
+        const result = await updateUserProfile(value);
+
+        if (!result || result.success) {
+          toast.success("Profile successfully updated");
+          setView("view");
+          return;
+        }
+
+        if (result.type === "validation") {
+          return {
+            form: "Invalid data",
+            fields: result.fields,
+          };
+        }
+
+        return {
+          form: result.message,
+        };
+      },
     },
     onSubmitInvalid() {
       const invalidInput = document.querySelector(
@@ -79,9 +99,17 @@ export function EditUserProfile({ profile, setView }: UserProfileProps) {
             )}
           </form.AppField>
 
+          <p className="col-span-full text-sm text-muted-foreground">
+            In order to save your changes please confirm your password
+          </p>
+
           <form.AppField name="password">
             {(field) => (
-              <field.TextField label="Password" required type="password" />
+              <field.TextField
+                label="Confirm Password"
+                required
+                type="password"
+              />
             )}
           </form.AppField>
 
@@ -112,7 +140,14 @@ export function EditUserProfile({ profile, setView }: UserProfileProps) {
               Cancel
             </Button>
             <form.AppForm>
-              <form.SubscribeButton label="Save details" />
+              <form.Subscribe selector={(state) => state.isDirty}>
+                {(isDirty) => (
+                  <form.SubscribeButton
+                    label="Save details"
+                    disabled={!isDirty}
+                  />
+                )}
+              </form.Subscribe>
             </form.AppForm>
           </div>
         </div>

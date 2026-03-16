@@ -3,13 +3,19 @@
 import { useAppForm } from "@/hooks/form";
 import { fugaLoginSchema } from "@/schema/login.schema";
 import { LogIn } from "lucide-react";
+import { Route } from "next";
 import Link from "next/link";
-import { logIn } from "../auth-actions";
+import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+import { logIn } from "../auth-actions";
 
 const FORM_ID = "login-form";
 
 export function LoginFormPage() {
+  const searchParams = useSearchParams();
+  const reason = searchParams.get("reason");
+  const redirectUrl = searchParams.get("redirectUrl");
+
   const form = useAppForm({
     defaultValues: {
       email: "",
@@ -20,7 +26,7 @@ export function LoginFormPage() {
       onChangeAsyncDebounceMs: 500,
       onSubmitAsync: async ({ value }) => {
         try {
-          const res = await logIn(value);
+          const res = await logIn(value, (redirectUrl as Route) ?? undefined);
 
           if (!res || res.success) {
             form.reset();
@@ -57,6 +63,12 @@ export function LoginFormPage() {
 
   return (
     <div className="min-w-87.5">
+      {reason === "registered" && (
+        <p className="text-sm text-green-600 text-center mb-4">
+          Account created! Please log in to continue.
+        </p>
+      )}
+
       <form
         id={FORM_ID}
         onSubmit={(e) => {

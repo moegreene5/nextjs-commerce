@@ -1,40 +1,75 @@
 "use server";
 
+import { ActionResult, SERVER_ERROR } from "@/entities/action";
 import { auth, store } from "@/lib/firebase/admin";
+import { signInWithEmailPassword } from "@/lib/firebase/sign-in";
+import { getUserFromSession } from "@/lib/session";
+import { RegisterData, userRegisterSchema } from "@/schema/register.schema";
+import { refresh } from "next/cache";
+import { cookies } from "next/headers";
 
-export const deleteAllUsersAndProfiles = async () => {
-  let nextPageToken: string | undefined;
+export async function updateUserProfile(
+  data: RegisterData,
+): Promise<ActionResult> {
+  const parsed = userRegisterSchema.safeParse(data);
 
-  do {
-    const listUsersResult = await auth.listUsers(1000, nextPageToken);
+  if (!parsed.success) {
+    return {
+      success: false,
+      type: "validation",
+      fields: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
 
-    const users = listUsersResult.users;
+  const { email, password, firstName, lastName, phoneNumber, username } =
+    parsed.data;
 
-    if (users.length === 0) break;
+  try {
+    const cookieStore = await cookies();
+    const session = await getUserFromSession(cookieStore);
 
-    const uids = users.map((user) => user.uid);
-
-    // 1️⃣ Delete Auth Users (bulk)
-    const deleteResult = await auth.deleteUsers(uids);
-    console.log(`Auth deleted: ${deleteResult.successCount}`);
-
-    // 2️⃣ Delete Firestore Profiles (batch in chunks of 500)
-    const batchSize = 500;
-    for (let i = 0; i < uids.length; i += batchSize) {
-      const batch = store.batch();
-      const chunk = uids.slice(i, i + batchSize);
-
-      chunk.forEach((uid) => {
-        const profileRef = store.collection("profile").doc(uid);
-        batch.delete(profileRef);
-      });
-
-      await batch.commit();
-      console.log(`Profiles deleted: ${chunk.length}`);
+    if (!session) {
+      return { success: false, type: "auth", message: "Unauthorized" };
     }
 
-    nextPageToken = listUsersResult.pageToken;
-  } while (nextPageToken);
+    const uid = session.user.uid;
+    const currentEmail = session.user.email as string;
 
-  console.log("All users and profiles deleted successfully.");
-};
+    const signIn = await signInWithEmailPassword(currentEmail, password);
+
+    if (!signIn.success) {
+      return {
+        success: false,
+        type: "validation",
+        fields: { password: ["Incorrect password"] },
+      };
+    }
+
+    const emailChanged = email !== currentEmail;
+    const nameChanged = `${firstName} ${lastName}` !== session.user.displayName;
+
+    if (emailChanged || nameChanged) {
+      await auth.updateUser(uid, {
+        ...(nameChanged ? { displayName: `${firstName} ${lastName}` } : {}),
+        ...(emailChanged ? { email } : {}),
+      });
+    }
+
+    await store
+      .collection("profile")
+      .doc(uid)
+      .update({
+        email,
+        name: { firstName, lastName },
+        phoneNumber,
+        userName: username || null,
+        updatedAt: new Date(),
+      });
+
+    refresh();
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("Update profile error:", err);
+    return { success: false, type: "server", message: SERVER_ERROR };
+  }
+}

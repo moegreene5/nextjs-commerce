@@ -54,7 +54,7 @@ export default function AccountNav({ links, showLogout = false }: Props) {
           >
             <SelectValue placeholder="Select an option" />
           </SelectTrigger>
-          <SelectContent className="uppercase text-xs border-gray-e1 rounded-md">
+          <SelectContent className="uppercase text-xs border-gray-e1 rounded-md bg-white">
             {links?.map(({ label, href }, index) => (
               <SelectItem
                 key={index}
@@ -87,7 +87,7 @@ export default function AccountNav({ links, showLogout = false }: Props) {
                 <Link
                   href={href}
                   prefetch
-                  className="flex items-center justify-between py-2.5 text-xs uppercase tracking-wide transition-colors duration-300"
+                  className="flex items-center justify-between py-2.5 text-xs uppercase tracking-wider transition-colors duration-300"
                 >
                   <span className="relative px-0.5">
                     {label}

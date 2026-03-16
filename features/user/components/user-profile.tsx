@@ -9,11 +9,9 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Package2Icon, UserRound } from "lucide-react";
 import Link from "next/link";
-import { connection } from "next/server";
 import { getCurrentUser } from "../user-queries";
 
 export default async function UserProfile() {
-  await connection();
   const user = await getCurrentUser({ withFullUser: true });
 
   return (
@@ -52,7 +50,6 @@ export default async function UserProfile() {
                 {user.email}
               </p>
             </div>
-
             <DropdownMenuGroup
               aria-label="Account navigation"
               className="flex gap-2.5 pb-2"

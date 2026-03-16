@@ -1,0 +1,34 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return (
+    <html>
+      <body>
+        <div className="flex min-h-screen flex-col items-center justify-center gap-10 bg-neutral-100 dark:bg-neutral-900">
+          <h1 className="text-6xl font-bold text-neutral-800 dark:text-neutral-200">
+            Something went wrong!
+          </h1>
+          <pre className="mt-2 text-lg text-neutral-500 dark:text-neutral-300">
+            {JSON.stringify(error, null, 2)}
+          </pre>
+          <Button
+            variant="secondary"
+            size={"lg"}
+            className="text-2xl hover:text-white"
+            onClick={() => reset()}
+          >
+            Try again
+          </Button>
+        </div>
+      </body>
+    </html>
+  );
+}
