@@ -134,6 +134,7 @@ export function EditUserProfile({ profile, setView }: UserProfileProps) {
 
           <div className="col-span-full flex gap-2.5 md:gap-4">
             <Button
+              type="button"
               className="bg-gray-200 text-black hover:bg-[#897f7b]"
               onClick={() => setView("view")}
             >
