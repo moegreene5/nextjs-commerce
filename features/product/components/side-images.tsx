@@ -3,12 +3,13 @@ import {
   CarouselApi,
   CarouselContent,
 } from "@/components/ui/carousel";
+import { ProductImage } from "@/entities/product";
 import { cn } from "@/utils/cn";
 import Image from "next/image";
 import { type Dispatch, type SetStateAction, useCallback } from "react";
 
 type SideImagesProps = {
-  images: string[];
+  images: ProductImage[];
   api: CarouselApi;
   setThumbsApi: Dispatch<SetStateAction<CarouselApi>>;
   current: number;
@@ -32,7 +33,7 @@ export const SideImages = ({
   return (
     <div className={className}>
       <Carousel
-        className="my-4 md:my-0 md:sticky md:top-0"
+        className="my-4 md:my-0 md:sticky md:top-18"
         orientation="vertical"
         setApi={setThumbsApi}
         opts={{ skipSnaps: true, watchDrag: false }}
@@ -49,7 +50,7 @@ export const SideImages = ({
             >
               <Image
                 alt={`Product image ${index + 1}`}
-                src={image || `/default-product-image.svg`}
+                src={image.url || `/default-product-image.svg`}
                 width={100}
                 height={100}
                 sizes="100px"

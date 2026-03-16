@@ -37,22 +37,27 @@ export function ShareLinks({ title, url }: ShareLinksProps) {
 
   const handleNativeShare = async () => {
     if (!canShare) return;
-
     try {
-      await navigator.share({
-        title,
-        url,
-      });
+      await navigator.share({ title, url });
     } catch (err) {
       console.error("Share cancelled or failed");
     }
   };
 
   return (
-    <div className="flex items-center gap-3 flex-wrap">
+    <div
+      role="group"
+      aria-label={`Share ${title}`}
+      className="flex items-center gap-3 flex-wrap"
+    >
       {canShare && (
-        <Button variant="outline" size="icon-lg" onClick={handleNativeShare}>
-          <FiShare2 />
+        <Button
+          variant="outline"
+          size="icon-lg"
+          onClick={handleNativeShare}
+          aria-label="Share this product"
+        >
+          <FiShare2 aria-hidden="true" />
         </Button>
       )}
 
@@ -60,9 +65,15 @@ export function ShareLinks({ title, url }: ShareLinksProps) {
         href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label="Share on Facebook (opens in new tab)"
       >
-        <Button variant="outline" size="icon-lg">
-          <FiFacebook />
+        <Button
+          variant="outline"
+          size="icon-lg"
+          tabIndex={-1}
+          aria-hidden="true"
+        >
+          <FiFacebook aria-hidden="true" />
         </Button>
       </a>
 
@@ -70,9 +81,15 @@ export function ShareLinks({ title, url }: ShareLinksProps) {
         href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label="Share on X / Twitter (opens in new tab)"
       >
-        <Button variant="outline" size="icon-lg">
-          <FiTwitter />
+        <Button
+          variant="outline"
+          size="icon-lg"
+          tabIndex={-1}
+          aria-hidden="true"
+        >
+          <FiTwitter aria-hidden="true" />
         </Button>
       </a>
 
@@ -80,17 +97,42 @@ export function ShareLinks({ title, url }: ShareLinksProps) {
         href={`https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label="Share on WhatsApp (opens in new tab)"
       >
-        <Button variant="outline" size="icon-lg">
-          <FaWhatsapp />
+        <Button
+          variant="outline"
+          size="icon-lg"
+          tabIndex={-1}
+          aria-hidden="true"
+        >
+          <FaWhatsapp aria-hidden="true" />
         </Button>
       </a>
 
-      <Button variant="outline" size="icon-lg" onClick={handleCopy}>
-        <FiLink />
+      <Button
+        variant="outline"
+        size="icon-lg"
+        onClick={handleCopy}
+        aria-label={copied ? "Link copied!" : "Copy link"}
+        aria-pressed={copied}
+      >
+        <FiLink aria-hidden="true" />
       </Button>
 
-      {copied && <span className="text-sm text-green-600">Copied!</span>}
+      <span
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {copied ? "Link copied to clipboard" : ""}
+      </span>
+
+      {copied && (
+        <span aria-hidden="true" className="text-sm text-green-600">
+          Copied!
+        </span>
+      )}
     </div>
   );
 }

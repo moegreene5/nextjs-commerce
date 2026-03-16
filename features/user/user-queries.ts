@@ -1,32 +1,33 @@
 import "server-only";
 
+import { Profile } from "@/entities/user";
 import { collections, store } from "@/lib/firebase/admin";
 import { getUserFromSession } from "@/lib/session";
+import { normalizeProfileDoc } from "@/lib/user";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { IProfile } from "@/types";
 
 export type User = Exclude<
   Awaited<ReturnType<typeof getUserFromSession>>,
   undefined | null
 >;
 
-async function getUserProfile(userId: string) {
-  const profileRef = store.collection(collections.profile);
-  const docRef = profileRef.doc(userId);
+async function getUserProfile(userId: string): Promise<Profile | null> {
+  const docSnap = await store.collection(collections.profile).doc(userId).get();
 
-  return (await docRef.get()).data();
+  if (!docSnap.exists) return null;
+  return normalizeProfileDoc(docSnap.data()!);
 }
 
 function _getCurrentUser(options: {
   withFullUser: true;
   redirectIfNotFound: true;
-}): Promise<IProfile>;
+}): Promise<Profile>;
 function _getCurrentUser(options: {
   withFullUser: true;
   redirectIfNotFound?: false;
-}): Promise<IProfile | null>;
+}): Promise<Profile | null>;
 function _getCurrentUser(options: {
   withFullUser?: false;
   redirectIfNotFound: true;
@@ -40,7 +41,8 @@ async function _getCurrentUser({
   withFullUser = false,
   redirectIfNotFound = false,
 } = {}) {
-  const user = await getUserFromSession(await cookies());
+  const cookieStore = await cookies();
+  const user = await getUserFromSession(cookieStore);
 
   if (user == null) {
     if (redirectIfNotFound) return redirect("/account/login");

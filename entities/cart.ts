@@ -10,6 +10,9 @@ export type PriceChange =
 
 export type CartItem = {
   productId: string;
+  variantId: string;
+  size: string;
+  slug: string;
   name: string;
   image: string;
   quantity: number;
@@ -24,6 +27,7 @@ export type Cart = {
   cartId: string;
   isGuest: boolean;
   totalItems: number;
+  totalQuantity: number;
   subtotal: number;
   items: CartItem[];
   lastActiveAt: Date;

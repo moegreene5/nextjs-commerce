@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "firebasestorage.googleapis.com" },
+      { hostname: "res.cloudinary.com", protocol: "https", port: "" },
+      { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
 };

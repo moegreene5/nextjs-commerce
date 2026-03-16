@@ -1,6 +1,6 @@
 import admin, { ServiceAccount } from "firebase-admin";
-import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
 
 export const serviceAccount: ServiceAccount = {
@@ -9,31 +9,29 @@ export const serviceAccount: ServiceAccount = {
   clientEmail: process.env.CLIENT_EMAIL,
 };
 
-let adminApp;
-
 if (!admin.apps.length) {
-  adminApp = admin.initializeApp({
+  admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: `https://${serviceAccount.projectId}.firebaseio.com`,
     storageBucket: process.env.STORAGE_BUCKET,
   });
 }
 
-export const app = adminApp;
+export const app = admin.app();
 
-export const auth = adminApp?.auth() || getAuth();
+export const auth = getAuth(app);
 
-export const store = adminApp?.firestore() || getFirestore();
+export const store = getFirestore(app);
 
-export const storage = adminApp?.storage() || getStorage();
+export const storage = getStorage(app);
 
 export const collections = {
   profile: "profile",
-  product: "product",
+  products: "products",
   cart: "cart",
   segment: "segment",
-  brand_category: "brand_category",
-  category: "category",
+  brands: "brands",
+  categories: "categories",
   order: "order",
   cartItems: "cartItems",
 };

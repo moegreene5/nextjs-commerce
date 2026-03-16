@@ -1,115 +1,247 @@
 import "server-only";
 
-import { Product } from "@/entities/product";
-import { productSegments, Segment } from "@/lib/constants";
+import {
+  ProductCard,
+  ProductDocument,
+  ProductExtrasData,
+  ProductFilters,
+} from "@/entities/product";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { collections, store } from "@/lib/firebase/admin";
-import { Filter } from "firebase-admin/firestore";
+import {
+  normalizeProductCard,
+  normalizeProductDoc,
+  PRODUCT_CARD_FIELDS,
+} from "@/lib/product";
+import { DocumentReference, FieldPath } from "firebase-admin/firestore";
+import { cacheLife, cacheTag, unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 
-export const getProduct = cache(async (productId: string) => {
-  if (!productId || typeof productId !== "string") {
-    notFound();
-  }
-  const productDoc = store.collection(collections.product).doc(productId);
-  const product = (await productDoc.get()).data();
+export const getProduct = cache(async (slug: string) => {
+  if (!slug || typeof slug !== "string") notFound();
 
-  if (!product) {
-    notFound();
-  }
+  const docRef = store.collection(collections.products).doc(slug);
+  const docSnap = await docRef.get();
 
-  return {
-    ...product,
-    id: product.id,
-    segment: product?.segment?.id || "",
-    category: product?.category.id,
-    brandCategory: product?.brandCategory.id,
-    created_at: product?.created_at.toDate(),
-    updated_at: product?.updated_at.toDate(),
-  } as Product;
+  if (!docSnap.exists) notFound();
+
+  return normalizeProductDoc(
+    docSnap as FirebaseFirestore.QueryDocumentSnapshot,
+  );
 });
 
-export const getProductsBySegment = cache(async (segment: Segment) => {
-  const segmentId = productSegments[segment];
-
-  if (!segmentId) {
-    return notFound();
-  }
-
-  const segmentRef = store.doc(`${collections.segment}/${segmentId}`);
-
+export const getFeaturedProducts = cache(async (limit = 5) => {
   const snapshot = await store
-    .collection(collections.product)
-    .where("segment", "==", segmentRef)
+    .collection(collections.products)
+    .where("isFeatured", "==", true)
+    .select(...PRODUCT_CARD_FIELDS)
+    .limit(limit)
     .get();
 
-  if (snapshot.empty) {
-    return notFound();
-  }
-
-  return snapshot.docs.map((doc) => {
-    const data = doc.data() as any;
-
-    return {
-      ...data,
-      id: doc.id,
-      segment: data.segment?.id,
-      category: data.category?.id,
-      brandCategory: data.brandCategory?.id,
-      out_of_stock: data.quantityInStore === 0,
-      created_at: data.created_at?.toDate?.()?.toISOString() ?? null,
-      updated_at: data.updated_at?.toDate?.()?.toISOString() ?? null,
-    };
-  }) as Product[];
+  if (snapshot.empty) return [];
+  return snapshot.docs.map(normalizeProductCard);
 });
 
-export const getRelatedProducts = async (productId: string) => {
-  const collection = store.collection(collections.product);
+export const getBestSellers = cache(async (limit = 5) => {
+  const snapshot = await store
+    .collection(collections.products)
+    .where("isBestSeller", "==", true)
+    .select(...PRODUCT_CARD_FIELDS)
+    .limit(limit)
+    .get();
 
-  const product = await collection.doc(productId).get();
+  if (snapshot.empty) return [];
 
-  const p = product.data();
+  return snapshot.docs.map(normalizeProductCard);
+});
 
-  const query = collection
-    .where(
-      "category",
-      "==",
-      store.doc(`${collections.category}/${p?.category?.id}`),
-    )
-    .where(
-      Filter.or(
-        Filter.where("brand", "==", p?.brand),
-        Filter.where(
-          "segment",
-          "==",
-          store.doc(`${collections.segment}/${p?.segment?.id}`),
-        ),
-        Filter.where(
-          "brandCategory",
-          "==",
-          store.doc(`${collections.brand_category}/${p?.brandCategory?.id}`),
-        ),
-      ),
-    )
-    .limit(8);
+export const getNewArrivals = cache(async (limit = 8) => {
+  const snapshot = await store
+    .collection(collections.products)
+    .select(...PRODUCT_CARD_FIELDS)
+    .orderBy("createdAt", "desc")
+    .limit(limit)
+    .get();
 
-  const related_products = [];
+  if (snapshot.empty) return [];
 
-  const result = await query.get();
+  return snapshot.docs.map(normalizeProductCard);
+});
 
-  for (let prd of result.docs) {
-    if (prd.id == productId) continue;
+export const getRelatedProducts = cache(async (slug: string) => {
+  if (!slug) return [];
 
-    related_products.push({
-      ...prd.data(),
-      id: prd.id,
-      segment: prd.data().segment?.id,
-      category: prd.data().category.id,
-      brandCategory: prd.data().brandCategory.id,
-      created_at: prd.data().created_at.toDate(),
-      updated_at: prd.data().updated_at.toDate(),
-    });
+  const productRef = store.collection(collections.products).doc(slug);
+  const productSnap = await productRef.get();
+
+  if (!productSnap.exists) return [];
+
+  const productDoc = productSnap;
+  const p = productDoc.data() as ProductDocument;
+  const productId = productDoc.id;
+  const categoryRef = p.category;
+  const currentStep = p.categoryStep;
+  const stepMatch = currentStep
+    ? currentStep + 1 <= 7
+      ? currentStep + 1
+      : null
+    : null;
+
+  const results: ProductCard[] = [];
+  const seen = new Set<string>([productId]);
+
+  const base = store
+    .collection(collections.products)
+    .where(FieldPath.documentId(), "!=", productId);
+
+  const queries = [
+    base.where("category", "==", categoryRef).where("brand", "==", p.brand),
+    currentStep != null ? base.where("categoryStep", "==", stepMatch) : null,
+    base.where("category", "==", categoryRef),
+  ];
+
+  for (const q of queries.filter(Boolean)) {
+    const remaining = 6 - results.length;
+    if (remaining <= 0) break;
+
+    const snap = await q!.limit(remaining).get();
+
+    for (const doc of snap.docs) {
+      if (!seen.has(doc.id)) {
+        seen.add(doc.id);
+        results.push(normalizeProductCard(doc));
+      }
+    }
   }
 
-  return related_products as Product[];
+  return results;
+});
+
+export const getProductExtras = cache(async (): Promise<ProductExtrasData> => {
+  "use cache";
+  cacheLife("weeks");
+  cacheTag(CACHE_TAGS.productExtras);
+
+  const [categorySnap, brandsSnap] = await Promise.all([
+    store.collection(collections.categories).orderBy("name", "asc").get(),
+    store.collection(collections.brands).orderBy("name", "asc").get(),
+  ]);
+
+  return {
+    categories: categorySnap.docs.map((doc) => ({
+      id: doc.id,
+      name: doc.data().name ?? "",
+      step: doc.data().step ?? null,
+    })),
+    brands: brandsSnap.docs.map((doc) => ({
+      id: doc.id,
+      name: doc.data().name ?? "",
+      slug: doc.data().slug ?? doc.id,
+      logo: doc.data().logo ?? null,
+    })),
+  };
+});
+
+export interface GetProductsResult {
+  products: ProductCard[];
+  lastDocId: string | null;
+  hasMore: boolean;
+  filteredCount: number;
+}
+
+const _getProducts = async function (
+  filters: {
+    isFeatured?: boolean;
+    isBestSeller?: boolean;
+    brand?: string | string[];
+    categoryId?: string | string[];
+  },
+  sort: {
+    sortBy: "createdAt" | "name";
+    sortDir: "asc" | "desc";
+  },
+  limit: number,
+  startAfterDocId: string | undefined,
+): Promise<GetProductsResult> {
+  const { isFeatured, isBestSeller, brand, categoryId } = filters;
+  const { sortBy, sortDir } = sort;
+
+  let baseQuery: FirebaseFirestore.Query = store
+    .collection(collections.products)
+    .select(...PRODUCT_CARD_FIELDS);
+
+  if (isFeatured !== undefined) {
+    baseQuery = baseQuery.where("isFeatured", "==", isFeatured);
+  }
+  if (isBestSeller !== undefined) {
+    baseQuery = baseQuery.where("isBestSeller", "==", isBestSeller);
+  }
+  if (brand !== undefined) {
+    const brands = Array.isArray(brand) ? brand : [brand];
+    baseQuery =
+      brands.length === 1
+        ? baseQuery.where("brand", "==", brands[0])
+        : baseQuery.where("brand", "in", brands);
+  }
+
+  if (categoryId !== undefined) {
+    const ids = Array.isArray(categoryId) ? categoryId : [categoryId];
+    if (ids.length === 1) {
+      const ref: DocumentReference = store.doc(
+        `${collections.categories}/${ids[0]}`,
+      );
+      baseQuery = baseQuery.where("category", "==", ref);
+    } else {
+      const refs = ids.map((id) =>
+        store.doc(`${collections.categories}/${id}`),
+      );
+      baseQuery = baseQuery.where("category", "in", refs);
+    }
+  }
+
+  const [filteredCountSnap, paginatedSnap] = await Promise.all([
+    baseQuery.count().get(),
+    (async () => {
+      let q = baseQuery.orderBy(sortBy, sortDir);
+      if (startAfterDocId) {
+        const cursorSnap = await store
+          .collection(collections.products)
+          .doc(startAfterDocId)
+          .get();
+        if (cursorSnap.exists) q = q.startAfter(cursorSnap);
+      }
+      return q.limit(limit + 1).get();
+    })(),
+  ]);
+
+  const filteredCount = filteredCountSnap.data().count;
+
+  if (paginatedSnap.empty) {
+    return {
+      products: [],
+      lastDocId: null,
+      hasMore: false,
+      filteredCount,
+    };
+  }
+
+  const hasMore = paginatedSnap.docs.length > limit;
+  const docs = hasMore
+    ? paginatedSnap.docs.slice(0, limit)
+    : paginatedSnap.docs;
+
+  return {
+    products: docs.map(normalizeProductCard),
+    lastDocId: hasMore ? docs[docs.length - 1].id : null,
+    hasMore,
+    filteredCount,
+  };
 };
+
+export const getProducts = cache(
+  unstable_cache(_getProducts, ["all-products"], {
+    tags: [CACHE_TAGS.allProducts],
+    revalidate: 3600,
+  }),
+);

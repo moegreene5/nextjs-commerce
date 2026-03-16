@@ -1,5 +1,7 @@
 import {
+  CheckboxField,
   Select,
+  SelectField,
   SubscribeButton,
   TextArea,
   TextField,
@@ -12,6 +14,8 @@ export const { useAppForm } = createFormHook({
     TextField,
     Select,
     TextArea,
+    SelectField,
+    CheckboxField,
   },
   formComponents: {
     SubscribeButton,

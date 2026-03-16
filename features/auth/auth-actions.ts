@@ -2,17 +2,24 @@
 
 import { auth, collections, store } from "@/lib/firebase/admin";
 import { sendEmail } from "@/lib/mail";
-import { createUserSession, deleteUserSession } from "@/lib/session";
+import {
+  createUserSession,
+  deleteUserSession,
+  getUserFromSession,
+} from "@/lib/session";
+import {
+  ChangePasswordInput,
+  changePasswordSchema,
+} from "@/schema/changePassword.schema";
 import { fugaLoginSchema, LoginFormData } from "@/schema/login.schema";
 import { RegisterData, userRegisterSchema } from "@/schema/register.schema";
-import {
-  forgotPasswordSchema,
-  ForgotPasswordSchema,
-} from "@/schema/reset.schema";
+import { ForgotPassword, forgotPasswordSchema } from "@/schema/reset.schema";
 import { UserRecord } from "firebase-admin/auth";
 import { Route } from "next";
 import { cookies } from "next/headers";
 import { redirect, RedirectType } from "next/navigation";
+import { mergeGuestCartToUser } from "../cart/cart-actions";
+import { Profile } from "@/entities/user";
 
 type ActionResult =
   | { success: true }
@@ -62,17 +69,16 @@ export async function registerCustomer(
     await auth.setCustomUserClaims(firebaseUser.uid, { role: "user" });
 
     const profileData = {
-      user_id: firebaseUser.uid,
-      name: { first_name: firstName, last_name: lastName },
+      userId: firebaseUser.uid,
+      name: { firstName, lastName },
       email,
-      phone_number: phoneNumber,
-      billing_address: null,
-      username: username || null,
-      created_at: new Date(),
-      updated_at: new Date(),
-      suspended: false,
-      verified: false,
-      user_type: "user",
+      phoneNumber,
+      userName: username || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isSuspended: false,
+      emailVerified: false,
+      userType: "user",
     };
 
     await profileRef.doc(firebaseUser.uid).set(profileData);
@@ -97,6 +103,7 @@ export async function registerCustomer(
     }
 
     await createUserSession(idToken, await cookies());
+    await mergeGuestCartToUser(firebaseUser.uid);
   } catch (err: unknown) {
     if (firebaseUser?.uid) {
       try {
@@ -137,7 +144,7 @@ export async function logIn(
 
     const profileRef = store.collection(collections.profile);
     const docRef = profileRef.doc(authUser.uid);
-    const userProfile = (await docRef.get()).data();
+    const userProfile = (await docRef.get()).data() as Profile;
 
     if (!userProfile) {
       return { success: false, type: "auth", message: GENERIC_LOGIN_ERROR };
@@ -195,6 +202,7 @@ export async function logIn(
     }
 
     await createUserSession(idToken, await cookies());
+    await mergeGuestCartToUser(authUser.uid);
   } catch (error) {
     console.error("Login error:", error);
     return { success: false, type: "server", message: SERVER_ERROR };
@@ -208,7 +216,7 @@ export async function logOut() {
 }
 
 export const sendResetPasswordEmail = async (
-  data: ForgotPasswordSchema,
+  data: ForgotPassword,
 ): Promise<ActionResult> => {
   const parsed = forgotPasswordSchema.safeParse(data);
 
@@ -246,7 +254,7 @@ export const sendResetPasswordEmail = async (
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
           <h2>Reset your password</h2>
           <p>We received a request to reset the password for your account.</p>
-          
+          <a
             href="${resetLink}"
             style="display:inline-block;margin-top:16px;padding:12px 24px;background:#000;color:#fff;text-decoration:none;font-weight:bold;"
           >
@@ -270,3 +278,117 @@ export const sendResetPasswordEmail = async (
 
   return { success: true };
 };
+
+export async function ChangePassword(
+  input: ChangePasswordInput,
+): Promise<ActionResult> {
+  const inputValidation = changePasswordSchema.safeParse(input);
+
+  if (!inputValidation.success) {
+    return {
+      success: false,
+      type: "validation",
+      fields: inputValidation.error.flatten().fieldErrors,
+    };
+  }
+
+  const { currentPassword, newPassword } = inputValidation.data;
+
+  try {
+    const session = await getUserFromSession(await cookies());
+    if (!session || !session?.user.uid) {
+      return {
+        success: false,
+        message: "Unauthorized access denied",
+        type: "auth",
+      };
+    }
+
+    const { email, uid: userId } = session.user;
+
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password: currentPassword,
+          returnSecureToken: false,
+        }),
+      },
+    );
+
+    if (!res.ok) {
+      const error = await res.json();
+      const code = error?.error?.message;
+
+      if (code === "INVALID_PASSWORD" || code === "INVALID_LOGIN_CREDENTIALS") {
+        return {
+          success: false,
+          type: "validation",
+          fields: { currentPassword: ["Incorrect password"] },
+        };
+      }
+
+      if (code === "TOO_MANY_ATTEMPTS_TRY_LATER") {
+        return {
+          success: false,
+          type: "server",
+          message: "Too many attempts. Please try again later.",
+        };
+      }
+
+      return {
+        success: false,
+        type: "server",
+        message: "Something went wrong. Please try again.",
+      };
+    }
+
+    await auth.updateUser(userId, { password: newPassword });
+    await auth.revokeRefreshTokens(userId);
+    await logOut();
+  } catch (error) {
+    console.error("[ChangePassword]", error);
+
+    return {
+      success: false,
+      type: "server",
+      message: "An unexpected error occurred. Please try again.",
+    };
+  }
+
+  redirect("/account/login");
+}
+
+type RevokeSessionsResult = Exclude<
+  ActionResult,
+  { success: false; type: "validation" } | { success: true }
+>;
+
+export async function revokeAllSessions(): Promise<RevokeSessionsResult> {
+  try {
+    const session = await getUserFromSession(await cookies());
+
+    if (!session || !session.user.uid) {
+      return {
+        success: false,
+        type: "auth",
+        message: "Unauthorized access denied",
+      };
+    }
+
+    await auth.revokeRefreshTokens(session.user.uid);
+    await logOut();
+  } catch (error) {
+    console.error("[revokeAllSessions]", error);
+    return {
+      success: false,
+      type: "server",
+      message: "Something went wrong. Please try again.",
+    };
+  }
+
+  redirect("/account/login");
+}

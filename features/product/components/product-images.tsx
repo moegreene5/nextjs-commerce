@@ -5,9 +5,10 @@ import { cn } from "@/utils/cn";
 import { useEffect, useState } from "react";
 import { CenterSection } from "./center-image-section";
 import { SideImages } from "./side-images";
+import { ProductImage } from "@/entities/product";
 
 interface ProductImagesProps {
-  images: string[];
+  images: ProductImage[];
   initialActiveIndex?: number;
 }
 

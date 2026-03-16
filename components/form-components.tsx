@@ -19,7 +19,11 @@ export function SubscribeButton({
   return (
     <form.Subscribe selector={(state) => state.isSubmitting}>
       {(isSubmitting) => (
-        <Button {...props} type="submit" disabled={isSubmitting}>
+        <Button
+          {...props}
+          type="submit"
+          disabled={isSubmitting || props.disabled}
+        >
           {isSubmitting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
@@ -157,6 +161,79 @@ export function Select({
           </option>
         ))}
       </select>
+      {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
+    </div>
+  );
+}
+
+export function SelectField({
+  label,
+  options,
+  required,
+  placeholder = "Select an option",
+}: {
+  label: string;
+  required?: boolean;
+  placeholder?: string;
+  options: Array<{ label: string; value: string }>;
+}) {
+  const field = useFieldContext<string>();
+  const errors = useStore(field.store, (state) => state.meta.errors);
+
+  return (
+    <div className="space-y-1">
+      <label htmlFor={label}>
+        <span className="block mb-2 text-sm font-medium text-stone-700">
+          {label}
+          {required && <span className="text-red-500 ml-0.5">*</span>}
+        </span>
+        <select
+          id={label}
+          name={field.name}
+          value={field.state.value}
+          onBlur={field.handleBlur}
+          onChange={(e) => field.handleChange(e.target.value)}
+          aria-invalid={!field.state.meta.isValid && field.state.meta.isTouched}
+          className="w-full h-10 px-3 rounded-md border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400 bg-white"
+        >
+          <option value="">{placeholder}</option>
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
+    </div>
+  );
+}
+
+export function CheckboxField({
+  label,
+  className,
+}: {
+  label: string;
+  className?: string;
+}) {
+  const field = useFieldContext<boolean>();
+  const errors = useStore(field.store, (state) => state.meta.errors);
+
+  return (
+    <div className="space-y-1">
+      <label
+        className={cn("flex items-center gap-2 cursor-pointer", className)}
+      >
+        <input
+          type="checkbox"
+          name={field.name}
+          checked={field.state.value}
+          onBlur={field.handleBlur}
+          onChange={(e) => field.handleChange(e.target.checked)}
+          className="w-4 h-4 border-stone-300 rounded"
+        />
+        <span className="text-sm font-medium text-stone-700">{label}</span>
+      </label>
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>
   );

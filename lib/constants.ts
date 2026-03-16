@@ -5,3 +5,5 @@ export const productSegments = {
 };
 
 export type Segment = keyof typeof productSegments;
+
+export const FREE_SHIPPING_THRESHOLD = 100_000;

@@ -1,7 +1,8 @@
-"use server";
+import "server-only";
 
 import { Cart, CartItem, PriceChange } from "@/entities/cart";
 import { collections, store } from "@/lib/firebase/admin";
+import { normalizeProductDoc } from "@/lib/product";
 import { getGuestId, getUserFromSession } from "@/lib/session";
 import { cookies } from "next/headers";
 import { cache } from "react";
@@ -11,7 +12,7 @@ export type GetCartResult =
   | { success: true; cart: null }
   | { success: false; error: string };
 
-function computePriceChange(
+export function computePriceChange(
   priceAtAdded: number,
   currentPrice: number,
 ): PriceChange {
@@ -32,18 +33,21 @@ function computePriceChange(
 }
 
 export const getCart = cache(async (): Promise<GetCartResult> => {
+  const cookieStore = await cookies();
+  const session = await getUserFromSession(cookieStore);
+  const cartId = session?.user.uid ?? getGuestId(cookieStore);
+
+  if (!cartId) return { success: true, cart: null };
+
   try {
-    const cookieStore = await cookies();
-    const session = await getUserFromSession(cookieStore);
-    const cartId = session?.user.uid ?? getGuestId(cookieStore);
-
-    if (!cartId) return { success: true, cart: null };
-
     const cartRef = store.collection(collections.cart).doc(cartId);
 
     const [cartSnap, itemsSnap] = await Promise.all([
       cartRef.get(),
-      cartRef.collection(collections.cartItems).get(),
+      cartRef
+        .collection(collections.cartItems)
+        .orderBy("addedAt", "desc")
+        .get(),
     ]);
 
     if (!cartSnap.exists || itemsSnap.empty) {
@@ -53,7 +57,7 @@ export const getCart = cache(async (): Promise<GetCartResult> => {
     const cartData = cartSnap.data()!;
 
     const productRefs = itemsSnap.docs.map((doc) =>
-      store.collection(collections.product).doc(doc.data().productId),
+      store.collection(collections.products).doc(doc.data().productId),
     );
     const productSnaps = await store.getAll(...productRefs);
 
@@ -65,23 +69,29 @@ export const getCart = cache(async (): Promise<GetCartResult> => {
 
     const items: CartItem[] = validItemDocs.map((doc) => {
       const d = doc.data();
-      const productSnap = productSnaps.find((p) => p.id === d.productId)!;
-      const productData = productSnap.data()!;
 
-      const currentPrice: number = productData.price;
+      const productSnap = productSnaps.find(
+        (p) => p.id === d.productId,
+      ) as FirebaseFirestore.QueryDocumentSnapshot;
+
+      const product = normalizeProductDoc(productSnap);
+
+      const variant = product.variants.find((v) => v.id === d.variantId);
+      const currentPrice = variant?.displayPrice ?? d.priceAtAdded;
 
       return {
         productId: d.productId,
-        name: productData.name,
-        image: Array.isArray(productData.image)
-          ? productData.image[0]
-          : productData.image,
+        variantId: d.variantId,
+        size: d.size ?? variant?.size ?? "",
+        slug: product.slug,
+        name: product.name,
+        image: product.images[0]?.url,
         quantity: d.quantity,
         priceAtAdded: d.priceAtAdded,
         currentPrice,
         priceChange: computePriceChange(d.priceAtAdded, currentPrice),
-        addedAt: d.addedAt?.toDate(),
-        updatedAt: d.updatedAt?.toDate(),
+        addedAt: d.addedAt?.toDate() ?? new Date(),
+        updatedAt: d.updatedAt?.toDate() ?? new Date(),
       };
     });
 
@@ -95,12 +105,13 @@ export const getCart = cache(async (): Promise<GetCartResult> => {
       cart: {
         cartId,
         isGuest: cartData.isGuest ?? !session,
+        totalQuantity: cartData.totalQuantity ?? 0,
         totalItems: cartData.totalItems ?? 0,
         subtotal,
         items,
-        lastActiveAt: cartData.lastActiveAt?.toDate(),
-        updatedAt: cartData.updatedAt?.toDate(),
-        createdAt: cartData.createdAt?.toDate(),
+        lastActiveAt: cartData.lastActiveAt?.toDate() ?? new Date(),
+        updatedAt: cartData.updatedAt?.toDate() ?? new Date(),
+        createdAt: cartData.createdAt?.toDate() ?? new Date(),
       },
     };
   } catch (error) {

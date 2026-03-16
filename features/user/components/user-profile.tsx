@@ -1,34 +1,98 @@
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import LoginButton from "@/features/auth/components/login-button";
-import { User } from "lucide-react";
+import { Package2Icon, UserRound } from "lucide-react";
 import Link from "next/link";
+import { connection } from "next/server";
 import { getCurrentUser } from "../user-queries";
 
 export default async function UserProfile() {
-  const user = await getCurrentUser({
-    withFullUser: true,
-  });
+  await connection();
+  const user = await getCurrentUser({ withFullUser: true });
 
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex flex-col items-end gap-1">
-        {user && (
-          <span className="text-sm font-medium tracking-wide">
-            {user?.name?.first_name} {user?.name?.last_name}
-          </span>
-        )}
-        <LoginButton />
-      </div>
+    <div>
       {user ? (
-        <Link href="/account">
-          <span className="sr-only">Go to Profile</span>
-          <User
-            aria-hidden
-            className="size-8 cursor-pointer rounded-full p-1 transition-all hover:bg-gray-100 dark:hover:bg-gray-800"
-          />
-        </Link>
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Avatar
+              className="size-6 cursor-pointer"
+              role="button"
+              aria-label={`Account menu for ${user.name.firstName}`}
+              aria-haspopup="true"
+            >
+              <AvatarFallback className="bg-primary text-white text-sm font-semibold capitalize">
+                {user.name.firstName[0]}
+              </AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent
+            align="end"
+            className="bg-white w-full p-4 rounded-md space-y-5 shadow-2xl"
+            aria-label="Account menu"
+          >
+            <div className="space-y-0.5" aria-live="polite">
+              <p
+                className="text-base md:text-lg font-semibold uppercase tracking-widest"
+                id="dropdown-account-label"
+              >
+                Account
+              </p>
+              <p
+                className="text-sm text-muted-foreground truncate"
+                aria-label={`Signed in as ${user.email}`}
+              >
+                {user.email}
+              </p>
+            </div>
+
+            <DropdownMenuGroup
+              aria-label="Account navigation"
+              className="flex gap-2.5 pb-2"
+            >
+              <DropdownMenuItem
+                asChild
+                className="rounded-none px-6 h-9 tracking-wide font-semibold uppercase cursor-pointer bg-black text-white"
+              >
+                <Link href="/account/orders" aria-label="View your orders">
+                  <Package2Icon aria-hidden="true" fontWeight={600} />
+                  Orders
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                asChild
+                className="rounded-none px-6 h-9 tracking-wide font-semibold uppercase cursor-pointer bg-black text-white"
+              >
+                <Link href="/account" aria-label="View your profile">
+                  <UserRound aria-hidden="true" fontWeight={600} />
+                  Profile
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ) : (
-        <User aria-hidden className="text-gray size-8 rounded-full p-1" />
+        <Link href="/account" aria-label="Go to account page">
+          <span className="hidden lg:inline text-xs font-semibold hover:underline">
+            Account
+          </span>
+
+          <Avatar
+            className="size-6 cursor-pointer lg:hidden"
+            aria-hidden="true"
+          >
+            <AvatarFallback className="bg-muted text-muted-foreground">
+              <UserRound className="size-5.5 md:size-6" aria-hidden="true" />
+            </AvatarFallback>
+          </Avatar>
+        </Link>
       )}
     </div>
   );
@@ -36,9 +100,9 @@ export default async function UserProfile() {
 
 export function UserProfileSkeleton() {
   return (
-    <div className="flex items-center gap-2">
-      <Skeleton className="bg-gray-200 h-6 w-6 rounded-full" />
-      <Skeleton className="bg-gray-200 h-4 w-16 rounded" />
+    <div role="status" aria-label="Loading user profile" aria-busy="true">
+      <Skeleton className="hidden lg:block bg-gray-200 h-4 w-14 rounded" />
+      <Skeleton className="bg-gray-200 h-6 w-6 rounded-full lg:hidden" />
     </div>
   );
 }

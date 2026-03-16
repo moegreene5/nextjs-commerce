@@ -242,14 +242,10 @@ function CarouselDots({ className }: { className?: string }) {
     setScrollSnaps(api.scrollSnapList());
     setSelectedIndex(api.selectedScrollSnap());
 
-    const onSelect = () => {
-      setSelectedIndex(api.selectedScrollSnap());
-    };
+    const onSelect = () => setSelectedIndex(api.selectedScrollSnap());
 
     api.on("select", onSelect);
-    api.on("reInit", () => {
-      setScrollSnaps(api.scrollSnapList());
-    });
+    api.on("reInit", () => setScrollSnaps(api.scrollSnapList()));
 
     return () => {
       api.off("select", onSelect);
@@ -259,10 +255,17 @@ function CarouselDots({ className }: { className?: string }) {
   if (!api) return null;
 
   return (
-    <div className={cn("flex items-center justify-center gap-2", className)}>
+    <div
+      className={cn("flex items-center justify-center gap-2", className)}
+      role="tablist"
+      aria-label="Slides"
+    >
       {scrollSnaps.map((_, index) => (
         <Button
           key={index}
+          role="tab"
+          aria-selected={index === selectedIndex}
+          aria-label={`Go to slide ${index + 1}`}
           onClick={() => api.scrollTo(index)}
           className={cn(
             "h-2 w-2 rounded-full transition-all duration-300",
@@ -279,10 +282,10 @@ function CarouselDots({ className }: { className?: string }) {
 export {
   Carousel,
   CarouselContent,
+  CarouselDots,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-  CarouselDots,
   useCarousel,
   type CarouselApi,
 };

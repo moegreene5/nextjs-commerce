@@ -9,9 +9,10 @@ import {
   CarouselNext,
 } from "@/components/ui/carousel";
 import { cn } from "@/utils/cn";
+import { ProductImage } from "@/entities/product";
 
 type CenterSectionProps = {
-  images: string[];
+  images: ProductImage[];
   setApi: Dispatch<SetStateAction<CarouselApi>>;
   className?: string;
 };
@@ -22,9 +23,10 @@ export const CenterSection = ({
   setApi,
 }: CenterSectionProps) => {
   const hasOnlyOneImage = images.length <= 1;
+
   return (
     <div className={cn("flex flex-col rounded-t-lg", className)}>
-      <div className="md:sticky md:top-0">
+      <div className="md:sticky md:top-18">
         <Carousel
           opts={{ loop: true }}
           className="[&>div]:rounded-lg"
@@ -39,14 +41,15 @@ export const CenterSection = ({
                   "relative aspect-square rounded-lg",
                   hasOnlyOneImage && "pl-0",
                 )}
-                key={image + index}
+                key={image.url + index}
               >
                 <Image
                   alt={`Product image ${index + 1}`}
-                  src={image || "/default-product-image.svg"}
+                  src={image.url}
                   fill
-                  priority={index === 0}
-                  sizes="(max-width: 450px) 300px, 480px"
+                  priority={image.isPrimary}
+                  unoptimized
+                  sizes="(max-width: 668px) 100vw, 50vw"
                   style={{ objectFit: "contain" }}
                 />
               </CarouselItem>

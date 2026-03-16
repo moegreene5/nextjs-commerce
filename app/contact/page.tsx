@@ -1,3 +1,4 @@
+import { Container } from "@/components/ui/container";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -5,5 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <div>Welcome to Contact Page</div>;
+  return <Container className="py-8">Welcome to Contact Page</Container>;
 }

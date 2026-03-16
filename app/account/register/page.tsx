@@ -2,8 +2,13 @@ import { Container } from "@/components/ui/container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getIsAuthenticated } from "@/features/auth/auth-queries";
 import { RegisterFormPage } from "@/features/auth/components/register-form";
+import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: "Create Account",
+};
 
 export default function Page() {
   return (
