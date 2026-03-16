@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppForm } from "@/hooks/form";
-import { fugaLoginSchema } from "@/schema/login.schema";
+import { loginSchema } from "@/schema/login.schema";
 import { LogIn } from "lucide-react";
 import { Route } from "next";
 import Link from "next/link";
@@ -22,7 +22,7 @@ export function LoginFormPage() {
       password: "",
     },
     validators: {
-      onChange: fugaLoginSchema,
+      onChange: loginSchema,
       onChangeAsyncDebounceMs: 500,
       onSubmitAsync: async ({ value }) => {
         try {

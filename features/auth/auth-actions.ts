@@ -18,7 +18,7 @@ import {
   ChangePasswordInput,
   changePasswordSchema,
 } from "@/schema/changePassword.schema";
-import { fugaLoginSchema, LoginFormData } from "@/schema/login.schema";
+import { LoginFormData, loginSchema } from "@/schema/login.schema";
 import { RegisterData, userRegisterSchema } from "@/schema/register.schema";
 import { ForgotPassword, forgotPasswordSchema } from "@/schema/reset.schema";
 import { UserRecord } from "firebase-admin/auth";
@@ -107,7 +107,7 @@ export async function logIn(
   data: LoginFormData,
   redirectUrl?: Route,
 ): Promise<ActionResult> {
-  const loginData = fugaLoginSchema.safeParse(data);
+  const loginData = loginSchema.safeParse(data);
 
   if (!loginData.success) {
     return {

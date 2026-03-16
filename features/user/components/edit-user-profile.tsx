@@ -1,9 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Profile } from "@/entities/user";
 import { useAppForm } from "@/hooks/form";
-import { userRegisterSchema } from "@/schema/register.schema";
+import { userProfileSchema } from "@/schema/register.schema";
 import { SetStateAction } from "react";
 import { toast } from "sonner";
 import { updateUserProfile } from "../user-action";
@@ -22,12 +23,11 @@ export function EditUserProfile({ profile, setView }: UserProfileProps) {
       firstName: profile?.name.firstName || "",
       lastName: profile?.name.lastName || "",
       username: profile?.userName || "",
-      email: profile?.email || "",
       phoneNumber: profile?.phoneNumber || "",
       password: "",
     },
     validators: {
-      onChange: userRegisterSchema,
+      onChange: userProfileSchema,
       onChangeAsyncDebounceMs: 500,
       onSubmitAsync: async ({ value }) => {
         const result = await updateUserProfile(value);
@@ -89,9 +89,15 @@ export function EditUserProfile({ profile, setView }: UserProfileProps) {
             )}
           </form.AppField>
 
-          <form.AppField name="email">
-            {(field) => <field.TextField label="Email" required type="email" />}
-          </form.AppField>
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Email</label>
+            <Input
+              type="email"
+              value={profile?.email || ""}
+              disabled
+              className="h-10"
+            />
+          </div>
 
           <form.AppField name="phoneNumber">
             {(field) => (

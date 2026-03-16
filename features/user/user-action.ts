@@ -4,14 +4,14 @@ import { ActionResult, SERVER_ERROR } from "@/entities/action";
 import { auth, store } from "@/lib/firebase/admin";
 import { signInWithEmailPassword } from "@/lib/firebase/sign-in";
 import { getUserFromSession } from "@/lib/session";
-import { RegisterData, userRegisterSchema } from "@/schema/register.schema";
+import { ProfileData, userProfileSchema } from "@/schema/register.schema";
 import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 
 export async function updateUserProfile(
-  data: RegisterData,
+  data: ProfileData,
 ): Promise<ActionResult> {
-  const parsed = userRegisterSchema.safeParse(data);
+  const parsed = userProfileSchema.safeParse(data);
 
   if (!parsed.success) {
     return {
@@ -21,8 +21,7 @@ export async function updateUserProfile(
     };
   }
 
-  const { email, password, firstName, lastName, phoneNumber, username } =
-    parsed.data;
+  const { password, firstName, lastName, phoneNumber, username } = parsed.data;
 
   try {
     const cookieStore = await cookies();
@@ -45,13 +44,11 @@ export async function updateUserProfile(
       };
     }
 
-    const emailChanged = email !== currentEmail;
     const nameChanged = `${firstName} ${lastName}` !== session.user.displayName;
 
-    if (emailChanged || nameChanged) {
+    if (nameChanged) {
       await auth.updateUser(uid, {
         ...(nameChanged ? { displayName: `${firstName} ${lastName}` } : {}),
-        ...(emailChanged ? { email } : {}),
       });
     }
 
@@ -59,7 +56,6 @@ export async function updateUserProfile(
       .collection("profile")
       .doc(uid)
       .update({
-        email,
         name: { firstName, lastName },
         phoneNumber,
         userName: username || null,

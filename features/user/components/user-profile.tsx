@@ -12,7 +12,7 @@ import Link from "next/link";
 import { getCurrentUser } from "../user-queries";
 
 export default async function UserProfile() {
-  const user = await getCurrentUser({ withFullUser: true });
+  const user = await getCurrentUser();
 
   return (
     <div>
@@ -22,11 +22,13 @@ export default async function UserProfile() {
             <Avatar
               className="size-6 cursor-pointer"
               role="button"
-              aria-label={`Account menu for ${user.name.firstName}`}
+              aria-label={`Account menu for ${
+                user.user.displayName?.split(" ")[0]
+              }`}
               aria-haspopup="true"
             >
               <AvatarFallback className="bg-primary text-white text-sm font-semibold capitalize">
-                {user.name.firstName[0]}
+                {user.user.displayName?.split(" ")[0][0]}
               </AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
@@ -45,9 +47,9 @@ export default async function UserProfile() {
               </p>
               <p
                 className="text-sm text-muted-foreground truncate"
-                aria-label={`Signed in as ${user.email}`}
+                aria-label={`Signed in as ${user.user.email}`}
               >
-                {user.email}
+                {user.user.email}
               </p>
             </div>
             <DropdownMenuGroup
