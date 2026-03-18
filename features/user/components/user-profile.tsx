@@ -22,13 +22,11 @@ export default async function UserProfile() {
             <Avatar
               className="size-6 cursor-pointer"
               role="button"
-              aria-label={`Account menu for ${
-                user.user.displayName?.split(" ")[0]
-              }`}
+              aria-label={`Account menu for ${user.user.displayName}`}
               aria-haspopup="true"
             >
               <AvatarFallback className="bg-primary text-white text-sm font-semibold capitalize">
-                {user.user.displayName?.split(" ")[0][0]}
+                {user.user.displayName?.[0]}
               </AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>

@@ -1,6 +1,10 @@
 import AccountNav from "@/components/account/nav";
 import { Container } from "@/components/ui/container";
-import type { Route } from "next";
+import type { Metadata, Route } from "next";
+
+export const metadata: Metadata = {
+  title: "My Account",
+};
 
 const ACCOUNT_LINKS: { label: string; href: Route; badge?: number }[] = [
   { label: "Your personal dashboard", href: "/account" },
