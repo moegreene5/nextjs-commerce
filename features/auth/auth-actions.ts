@@ -26,6 +26,7 @@ import { Route } from "next";
 import { cookies } from "next/headers";
 import { redirect, RedirectType } from "next/navigation";
 import { mergeGuestCartToUser } from "../cart/cart-actions";
+import { refresh } from "next/cache";
 
 export async function registerCustomer(
   data: RegisterData,

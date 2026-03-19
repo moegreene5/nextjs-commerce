@@ -99,6 +99,7 @@ export const getRelatedProducts = cache(async (slug: string) => {
     base.where("category", "==", categoryRef).where("brand", "==", p.brand),
     currentStep != null ? base.where("categoryStep", "==", stepMatch) : null,
     base.where("category", "==", categoryRef),
+    base.where("isBestSeller", "==", true),
   ];
 
   for (const q of queries.filter(Boolean)) {
