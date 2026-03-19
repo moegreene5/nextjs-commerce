@@ -79,6 +79,17 @@ function parseForm(form: FormData) {
 export async function createProduct(
   form: FormData,
 ): Promise<ActionResult<{ id: string; name: string }>> {
+  const cookieStore = await cookies();
+  const session = await getUserFromSession(cookieStore);
+
+  if (!session) {
+    return { success: false, error: "Not Authorized." };
+  }
+
+  if (session.claims.role !== "admin") {
+    return { success: false, error: "Insufficient permissions" };
+  }
+
   let uploadedUrls: string[] = [];
 
   try {
@@ -100,12 +111,6 @@ export async function createProduct(
     const imagesResult = imagesSchema.safeParse(files);
     if (!imagesResult.success) {
       return { success: false, error: imagesResult.error.issues[0].message };
-    }
-
-    const cookieStore = await cookies();
-    const session = await getUserFromSession(cookieStore);
-    if (!session || session.user.email !== "agbasiifeanyi@gmail.com") {
-      return { success: false, error: "Not Authorized." };
     }
 
     const categoryRef = store.doc(

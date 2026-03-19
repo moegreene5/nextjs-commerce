@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     staleTimes: {
       dynamic: 30,
     },
+    appNewScrollHandler: true,
   },
   reactCompiler: true,
   images: {

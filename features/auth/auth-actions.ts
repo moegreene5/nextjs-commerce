@@ -223,6 +223,17 @@ export const sendResetPasswordEmail = async (
 export async function ChangePassword(
   input: ChangePasswordInput,
 ): Promise<ActionResult> {
+  const session = await getUserFromSession(await cookies());
+  if (!session?.user.uid) {
+    return {
+      success: false,
+      message: "Unauthorized access denied",
+      type: "auth",
+    };
+  }
+
+  const { email, uid: userId } = session.user;
+
   const inputValidation = changePasswordSchema.safeParse(input);
 
   if (!inputValidation.success) {
@@ -236,54 +247,16 @@ export async function ChangePassword(
   const { currentPassword, newPassword } = inputValidation.data;
 
   try {
-    const session = await getUserFromSession(await cookies());
-    if (!session || !session?.user.uid) {
+    const verify = await signInWithEmailPassword(email!, currentPassword);
+
+    if (!verify.success) {
+      if (verify.message.includes("Too many attempts")) {
+        return { success: false, type: "server", message: verify.message };
+      }
       return {
         success: false,
-        message: "Unauthorized access denied",
-        type: "auth",
-      };
-    }
-
-    const { email, uid: userId } = session.user;
-
-    const res = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password: currentPassword,
-          returnSecureToken: false,
-        }),
-      },
-    );
-
-    if (!res.ok) {
-      const error = await res.json();
-      const code = error?.error?.message;
-
-      if (code === "INVALID_PASSWORD" || code === "INVALID_LOGIN_CREDENTIALS") {
-        return {
-          success: false,
-          type: "validation",
-          fields: { currentPassword: ["Incorrect password"] },
-        };
-      }
-
-      if (code === "TOO_MANY_ATTEMPTS_TRY_LATER") {
-        return {
-          success: false,
-          type: "server",
-          message: "Too many attempts. Please try again later.",
-        };
-      }
-
-      return {
-        success: false,
-        type: "server",
-        message: "Something went wrong. Please try again.",
+        type: "validation",
+        fields: { currentPassword: ["Incorrect password"] },
       };
     }
 
@@ -292,7 +265,6 @@ export async function ChangePassword(
     await logOut();
   } catch (error) {
     console.error("[ChangePassword]", error);
-
     return {
       success: false,
       type: "server",

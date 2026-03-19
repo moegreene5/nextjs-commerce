@@ -25,7 +25,15 @@ export async function signInWithEmailPassword(
     const isAuthError =
       message === "INVALID_PASSWORD" ||
       message === "EMAIL_NOT_FOUND" ||
-      message === "USER_DISABLED";
+      message === "USER_DISABLED" ||
+      message === "INVALID_LOGIN_CREDENTIALS";
+
+    if (message === "TOO_MANY_ATTEMPTS_TRY_LATER") {
+      return {
+        success: false,
+        message: "Too many attempts. Please try again later.",
+      };
+    }
 
     return {
       success: false,

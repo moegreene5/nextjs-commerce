@@ -3,7 +3,7 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { startTransition } from "react";
 import { Button } from "./button";
 
 type Props = {
@@ -15,14 +15,16 @@ export default function BackButton({ href, children = "Back" }: Props) {
   const router = useRouter();
 
   const handleClick = () => {
-    router.back();
+    startTransition(() => {
+      router.back();
+    });
   };
 
   if (href) {
     return (
       <Link
         href={href}
-        className="text-primary hover:text-primary-dark inline-flex items-center text-sm font-medium"
+        className="inline-flex items-center text-sm font-medium"
       >
         <ArrowLeft aria-hidden className="mr-1 size-4" />
         {children}
@@ -31,10 +33,7 @@ export default function BackButton({ href, children = "Back" }: Props) {
   }
 
   return (
-    <Button
-      onClick={handleClick}
-      className="text-primary hover:text-primary-dark inline-flex items-center text-sm font-medium uppercase"
-    >
+    <Button onClick={handleClick}>
       <ArrowLeft aria-hidden className="mr-1 size-4" />
       {children}
     </Button>

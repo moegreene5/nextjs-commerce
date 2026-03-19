@@ -19,15 +19,10 @@ export default function Account() {
 }
 
 async function AccountPage() {
-  const user = await getCurrentUser({ withFullUser: true });
-
-  if (!user) {
-    return (
-      <div className="text-center py-20 text-black/40 text-sm">
-        Not authenticated
-      </div>
-    );
-  }
+  const user = await getCurrentUser({
+    withFullUser: true,
+    redirectIfNotFound: true,
+  });
 
   return <AccountInformation user={user} />;
 }

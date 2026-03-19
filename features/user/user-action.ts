@@ -11,6 +11,16 @@ import { cookies } from "next/headers";
 export async function updateUserProfile(
   data: ProfileData,
 ): Promise<ActionResult> {
+  const cookieStore = await cookies();
+  const session = await getUserFromSession(cookieStore);
+
+  if (!session) {
+    return { success: false, type: "auth", message: "Unauthorized" };
+  }
+
+  const uid = session.user.uid;
+  const currentEmail = session.user.email as string;
+
   const parsed = userProfileSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -24,16 +34,6 @@ export async function updateUserProfile(
   const { password, firstName, lastName, phoneNumber, username } = parsed.data;
 
   try {
-    const cookieStore = await cookies();
-    const session = await getUserFromSession(cookieStore);
-
-    if (!session) {
-      return { success: false, type: "auth", message: "Unauthorized" };
-    }
-
-    const uid = session.user.uid;
-    const currentEmail = session.user.email as string;
-
     const signIn = await signInWithEmailPassword(currentEmail, password);
 
     if (!signIn.success) {

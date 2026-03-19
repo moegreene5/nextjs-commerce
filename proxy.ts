@@ -1,3 +1,4 @@
+import { Route } from "next";
 import { NextRequest, NextResponse } from "next/server";
 import { COOKIE_SESSION_KEY, getUserFromSession } from "./lib/session";
 
@@ -13,7 +14,7 @@ const ROUTES = {
 
 const isPathIn = (path: string, paths: string[]) => paths.includes(path);
 
-const redirectTo = (url: string, request: NextRequest) => {
+const redirectTo = (url: Route, request: NextRequest) => {
   const response = NextResponse.redirect(new URL(url, request.url));
   response.cookies.delete(COOKIE_SESSION_KEY);
   return response;

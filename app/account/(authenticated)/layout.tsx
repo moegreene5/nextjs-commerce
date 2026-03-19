@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "My Account",
 };
 
-const ACCOUNT_LINKS: { label: string; href: Route; badge?: number }[] = [
+const ACCOUNT_LINKS: { label: string; href: Route }[] = [
   { label: "Your personal dashboard", href: "/account" },
   { label: "Orders", href: "/account/orders" },
   { label: "Addresses", href: "/account/addresses" },
@@ -20,7 +20,6 @@ export default function AccountLayout({ children }: LayoutProps<"/account">) {
         <div className="w-full shrink-0 md:sticky md:top-32 md:h-fit md:w-44 lg:w-52">
           <AccountNav links={ACCOUNT_LINKS} showLogout />
         </div>
-
         <div className="min-w-0 flex-1 md:pr-16 lg:pr-24">{children}</div>
       </div>
     </Container>
