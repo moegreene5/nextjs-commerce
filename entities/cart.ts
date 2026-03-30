@@ -10,6 +10,16 @@ export type PriceChange =
       currentPrice: number;
     };
 
+export type CartItemDocument = {
+  productId: string;
+  variantId: string;
+  size: string;
+  priceAtAdded: number;
+  quantity: number;
+  addedAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+};
+
 export type CartItem = {
   productId: string;
   variantId: string;

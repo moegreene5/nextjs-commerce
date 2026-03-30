@@ -19,6 +19,7 @@ export function normalizeProfileDoc(
     emailVerified: data.emailVerified ?? false,
     userType: data.userType ?? "user",
     isSuspended: data.isSuspended ?? false,
+    cartId: data.cartId ?? undefined,
     createdAt: toISO(data.createdAt),
     updatedAt: toISO(data.updatedAt),
   };

@@ -1,6 +1,6 @@
 "use server";
 
-import { Cart, CartItem } from "@/entities/cart";
+import { Cart, CartItemDocument } from "@/entities/cart";
 import { Profile } from "@/entities/user";
 import { AppError } from "@/lib/errors";
 import { collections, store } from "@/lib/firebase/admin";
@@ -39,7 +39,6 @@ export async function addToCart(
     const { productId, variantId, quantity } = result.data;
 
     const cookieStore = await cookies();
-
     const cartId = getOrCreateCartId(cookieStore);
 
     const cartRef = store.collection(collections.cart).doc(cartId);
@@ -220,7 +219,7 @@ export async function incrementOrDecreaseQuantity(
       if (!cartItemSnap.exists)
         throw new AppError("Item not found in cart.", "NOT_FOUND");
 
-      const currentItem = cartItemSnap.data() as CartItem;
+      const currentItem = cartItemSnap.data() as CartItemDocument;
       const itemQuantityInCart = currentItem.quantity;
       const now = FieldValue.serverTimestamp();
 
@@ -288,6 +287,8 @@ export async function incrementOrDecreaseQuantity(
   }
 }
 
+// ─── associateCartWithUser ────────────────────────────────────────────────────
+
 export async function associateCartWithUser(userId: string): Promise<void> {
   if (!userId || typeof userId !== "string" || !userId.trim()) return;
 
@@ -296,18 +297,21 @@ export async function associateCartWithUser(userId: string): Promise<void> {
     const currentCartId = getCartId(cookieStore);
 
     const userRef = store.collection(collections.profile).doc(userId);
-    const userSnap = await userRef.get();
-    const user = userSnap.data() as Profile;
-    const storedCartId: string | undefined = user?.cartId;
 
-    if (!storedCartId) {
-      if (currentCartId) {
-        await userRef.set({ cartId: currentCartId }, { merge: true });
+    const storedCartId = await store.runTransaction(async (transaction) => {
+      const userSnap = await transaction.get(userRef);
+      const user = userSnap.data() as Profile | undefined;
+      const existing: string | undefined = user?.cartId;
+
+      if (!existing && currentCartId) {
+        transaction.set(userRef, { cartId: currentCartId }, { merge: true });
+        return currentCartId;
       }
-      return;
-    }
 
-    if (storedCartId === currentCartId) return;
+      return existing;
+    });
+
+    if (!storedCartId || storedCartId === currentCartId) return;
 
     if (currentCartId) {
       await mergeCartsIntoTarget({
@@ -347,7 +351,7 @@ async function mergeCartsIntoTarget({
 
     const sourceItems = sourceItemsSnap.docs.map((doc) => ({
       docRef: doc.ref as DocumentReference,
-      data: doc.data() as CartItem,
+      data: doc.data() as CartItemDocument,
     }));
 
     const uniqueProductIds = [
@@ -371,7 +375,10 @@ async function mergeCartsIntoTarget({
     );
 
     const targetItemsMap = new Map(
-      targetItemsSnap.docs.map((doc) => [doc.id, doc.data() as CartItem]),
+      targetItemsSnap.docs.map((doc) => [
+        doc.id,
+        doc.data() as CartItemDocument,
+      ]),
     );
 
     const targetCartData = targetCartSnap.data() as Cart | undefined;
