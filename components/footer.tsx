@@ -45,9 +45,9 @@ const Footer = () => {
             <li className="transition-transform duration-300 hover:scale-105 hover:text-black">
               <Link href="/cart">Cart</Link>
             </li>
-            {/* <li className="transition-transform duration-300 hover:scale-105 hover:text-black">
+            <li className="transition-transform duration-300 hover:scale-105 hover:text-black">
               <Link href="/checkout">Checkout</Link>
-            </li> */}
+            </li>
           </ul>
         </div>
         <div>

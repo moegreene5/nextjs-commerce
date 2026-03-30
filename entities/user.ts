@@ -12,6 +12,7 @@ export interface Profile extends ITimestamp {
   };
   phoneNumber: string;
   userName: string;
+  cartId: string | undefined;
   emailVerified: boolean;
   userType: "user" | "admin";
   isSuspended: boolean;

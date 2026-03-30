@@ -5,8 +5,13 @@ import CartItemCard from "@/features/cart/components/cart-item";
 import FreeShippingProgress from "@/features/cart/components/free-shipping-threshold";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
 import { formatPrice } from "@/utils/format-price";
+import { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: "Your Shopping Cart",
+};
 
 export default function Page() {
   return (
@@ -111,7 +116,7 @@ async function CartPage() {
                 className="w-full h-12 uppercase tracking-widest text-xs font-semibold border border-primary rounded-none"
                 asChild
               >
-                <Link href="/account">Checkout</Link>
+                <Link href="/checkout">Checkout</Link>
               </Button>
 
               <Button

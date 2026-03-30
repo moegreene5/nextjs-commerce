@@ -24,51 +24,34 @@ export default function CartItemCard({ item, isCartPage = false }: Props) {
   const closeModal = useModalStore((s) => s.closeModal);
 
   const [isRemoving, startRemoveTransition] = useTransition();
-  const [isIncrementing, startIncrementTransition] = useTransition();
-  const [isDecrementing, startDecrementTransition] = useTransition();
+  const [isUpdating, startUpdateTransition] = useTransition();
 
-  const isPending = isRemoving || isIncrementing || isDecrementing;
-
-  const saleActive =
-    item.priceChange.changed && item.priceChange.direction === "down";
+  const isPending = isRemoving || isUpdating;
 
   const handleRemove = () => {
     startRemoveTransition(async () => {
       const result = await removeItemFromCart({ variantId: item.variantId });
       if (!result.success) {
         toast.error(result.error);
-        return;
       }
     });
   };
 
-  const handleIncrement = () => {
-    startIncrementTransition(async () => {
+  const handleQuantityChange = (type: "increase" | "decrease") => {
+    startUpdateTransition(async () => {
       const result = await incrementOrDecreaseQuantity({
         productId: item.productId,
         variantId: item.variantId,
-        type: "increase",
+        type,
       });
       if (!result.success) {
         toast.error(result.error);
-        return;
       }
     });
   };
 
-  const handleDecrement = () => {
-    startDecrementTransition(async () => {
-      const result = await incrementOrDecreaseQuantity({
-        productId: item.productId,
-        variantId: item.variantId,
-        type: "decrease",
-      });
-      if (!result.success) {
-        toast.error(result.error);
-        return;
-      }
-    });
-  };
+  const saleActive =
+    item.priceChange.changed && item.priceChange.direction === "down";
 
   return (
     <div
@@ -165,7 +148,7 @@ export default function CartItemCard({ item, isCartPage = false }: Props) {
               variant="ghost"
               size="icon"
               className="size-6 rounded-full"
-              onClick={handleDecrement}
+              onClick={() => handleQuantityChange("decrease")}
               disabled={isPending}
               aria-label="Decrease quantity"
             >
@@ -181,7 +164,7 @@ export default function CartItemCard({ item, isCartPage = false }: Props) {
               variant="ghost"
               size="icon"
               className="size-6 rounded-full"
-              onClick={handleIncrement}
+              onClick={() => handleQuantityChange("increase")}
               disabled={isPending}
               aria-label="Increase quantity"
             >

@@ -211,7 +211,16 @@ export async function deleteProducts(ids: string[]) {
     ids.map((id) => store.collection(collections.products).doc(id).get()),
   );
 
-  await Promise.all(docs.map((doc) => doc.ref.delete()));
+  const batch = store.batch();
+  docs.forEach((doc) => batch.delete(doc.ref));
+  await batch.commit();
+
+  const allImageUrls = docs.flatMap((doc) =>
+    (doc.data()?.images ?? []).map((img: { url: string }) => img.url),
+  );
+  if (allImageUrls.length > 0) {
+    await Promise.allSettled(allImageUrls.map(deleteImage));
+  }
 
   const hasFeatured = docs.some((doc) => doc.data()?.isFeatured);
   const hasBestSeller = docs.some((doc) => doc.data()?.isBestSeller);
@@ -220,19 +229,6 @@ export async function deleteProducts(ids: string[]) {
   if (hasBestSeller) updateTag(CACHE_TAGS.bestSellers);
 
   return { deleted: ids.length };
-}
-
-export async function deleteAllProducts() {
-  const snapshot = await store.collection(collections.products).get();
-
-  if (snapshot.empty) return { deleted: 0 };
-
-  await Promise.all(snapshot.docs.map((doc) => doc.ref.delete()));
-
-  updateTag(CACHE_TAGS.featuredProducts);
-  updateTag(CACHE_TAGS.bestSellers);
-
-  return { deleted: snapshot.docs.length };
 }
 
 export async function fetchMoreProducts(

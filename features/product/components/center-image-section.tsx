@@ -1,15 +1,15 @@
-import type { Dispatch, SetStateAction } from "react";
-import Image from "next/image";
 import {
-  CarouselApi,
   Carousel,
+  CarouselApi,
   CarouselContent,
   CarouselItem,
-  CarouselPrevious,
   CarouselNext,
+  CarouselPrevious,
 } from "@/components/ui/carousel";
-import { cn } from "@/utils/cn";
 import { ProductImage } from "@/entities/product";
+import { cn } from "@/utils/cn";
+import Image from "next/image";
+import type { Dispatch, SetStateAction } from "react";
 
 type CenterSectionProps = {
   images: ProductImage[];
@@ -48,9 +48,11 @@ export const CenterSection = ({
                   src={image.url}
                   fill
                   priority={image.isPrimary}
+                  fetchPriority={image.isPrimary ? "high" : "auto"}
                   unoptimized
                   sizes="(max-width: 668px) 100vw, 50vw"
                   style={{ objectFit: "contain" }}
+                  loading={image.isPrimary ? "eager" : "lazy"}
                 />
               </CarouselItem>
             ))}

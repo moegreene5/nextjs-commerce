@@ -47,8 +47,8 @@ const ProductCard = ({
   hasMultipleVariants,
   showAddToCart = true,
 }: ProductCardProps) => {
-  const [isPending, startTransition] = useTransition();
   const { show } = useCartAlertStore();
+  const [isPending, startTransition] = useTransition();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();

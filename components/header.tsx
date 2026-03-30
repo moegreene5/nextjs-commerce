@@ -9,9 +9,7 @@ import { Suspense } from "react";
 import Logo from "./ui/logo";
 
 const ProductAddedAlert = dynamic(() =>
-  import("@/features/product/components/cart-alert").then(
-    (mod) => mod.CartAlert,
-  ),
+  import("@/features/cart/components/cart-alert").then((mod) => mod.CartAlert),
 );
 
 export default function Header() {

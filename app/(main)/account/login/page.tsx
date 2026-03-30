@@ -1,3 +1,4 @@
+import { Container } from "@/components/ui/container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getIsAuthenticated } from "@/features/auth/auth-queries";
 import { LoginFormPage } from "@/features/auth/components/login-form";
@@ -9,23 +10,26 @@ export const metadata: Metadata = {
   title: "Login",
 };
 
-type Props = {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-};
-
-export default async function Page({
-  searchParams,
-}: PageProps<"/account/login">) {
+export default async function Page() {
   return (
-    <Suspense fallback={<LoginSkeleton />}>
-      <LoginPage searchParams={searchParams} />
-    </Suspense>
+    <>
+      <Container className="mx-auto max-w-2xl space-y-12 py-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">Welcome Back</h1>
+          <p className="mt-2">Sign in to your account to continue shopping</p>
+        </div>
+        <div className="min-h-40">
+          <Suspense fallback={<LoginSkeleton />}>
+            <LoginPage />
+          </Suspense>
+        </div>
+      </Container>
+    </>
   );
 }
 
-async function LoginPage({ searchParams }: Props) {
+async function LoginPage() {
   const loggedIn = await getIsAuthenticated();
-  const { redirectUrl } = await searchParams;
 
   if (loggedIn) redirect("/");
 

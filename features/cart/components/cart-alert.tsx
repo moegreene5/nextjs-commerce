@@ -7,6 +7,7 @@ import { useModalStore } from "@/store/modal";
 import { cn } from "@/utils/cn";
 import { formatPrice } from "@/utils/format-price";
 import Image from "next/image";
+import Link from "next/link";
 
 type Props = {
   className?: string;
@@ -28,17 +29,18 @@ export function CartAlert({ className }: Props) {
       <AlertTitle className="text-nowrap text-sm font-bold">
         Product has been added to the cart!
       </AlertTitle>
-      <AlertDescription className="mt-6 flex flex-col">
+      <AlertDescription className="mt-6 flex flex-col min-h-24">
         <div className="mb-6 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Image
-              width={48}
-              height={48}
-              alt={product.name}
-              className="z-0 select-none rounded object-cover transition-transform group-hover:scale-105"
-              src={product.image || "/default-product-image.svg"}
-              sizes="(max-width: 450px) 150px, 300px"
-            />
+            <div className="relative w-12 h-12 shrink-0">
+              <Image
+                fill
+                alt={product.name}
+                className="z-0 select-none rounded object-cover transition-transform group-hover:scale-105"
+                src={product.image || "/default-product-image.svg"}
+                sizes="48px"
+              />
+            </div>
             <div className="flex flex-col">
               <span className="font-bold">{product.name}</span>
               <span className="text-xs text-gray-400 font-geologica">
@@ -67,11 +69,11 @@ export function CartAlert({ className }: Props) {
             View cart
           </Button>
           <Button
+            asChild
             variant="default"
-            // onClick={() => router.push("/checkout")}
             className="rounded-md px-10 py-4 transition-all hover:scale-105"
           >
-            Checkout
+            <Link href={"/checkout"}>Checkout</Link>
           </Button>
         </div>
       </AlertDescription>

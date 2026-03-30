@@ -1,16 +1,11 @@
 "use server";
 
 import { Cart, CartItem } from "@/entities/cart";
-import { ProductDocument } from "@/entities/product";
+import { Profile } from "@/entities/user";
 import { AppError } from "@/lib/errors";
 import { collections, store } from "@/lib/firebase/admin";
 import { normalizeProductDoc } from "@/lib/product";
-import {
-  clearGuestSession,
-  getGuestId,
-  getOrCreateGuestId,
-  getUserFromSession,
-} from "@/lib/session";
+import { getCartId, getOrCreateCartId, setCartId } from "@/lib/session";
 import {
   AddToCartInput,
   addToCartSchema,
@@ -19,7 +14,7 @@ import {
   RemoveFromCartInput,
   removeFromCartSchema,
 } from "@/schema/cart.schema";
-import { FieldValue } from "firebase-admin/firestore";
+import { DocumentReference, FieldValue } from "firebase-admin/firestore";
 import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 
@@ -44,8 +39,8 @@ export async function addToCart(
     const { productId, variantId, quantity } = result.data;
 
     const cookieStore = await cookies();
-    const session = await getUserFromSession(cookieStore, false);
-    const cartId = session?.user.uid ?? getOrCreateGuestId(cookieStore);
+
+    const cartId = getOrCreateCartId(cookieStore);
 
     const cartRef = store.collection(collections.cart).doc(cartId);
     const cartItemRef = cartRef
@@ -69,9 +64,13 @@ export async function addToCart(
       const variant = product.variants.find((v) => v.id === variantId);
       if (!variant) throw new AppError("Variant not found", "NOT_FOUND");
 
+      if (variant.quantityInStore < 1)
+        throw new AppError("Out of stock", "OUT_OF_STOCK");
+
       const currentTotalItems = cartSnap.exists
         ? cartSnap.data()?.totalItems ?? 0
         : 0;
+
       if (!cartItemSnap.exists && currentTotalItems >= MAX_CART_ITEMS) {
         throw new AppError("Your cart is full.", "CART_FULL");
       }
@@ -80,9 +79,6 @@ export async function addToCart(
         ? cartItemSnap.data()?.quantity ?? 0
         : 0;
       const totalQuantityInCart = currentCartQuantity + quantity;
-
-      if (variant.quantityInStore < 1)
-        throw new AppError("Out of stock", "OUT_OF_STOCK");
 
       if (totalQuantityInCart > variant.quantityInStore) {
         const remaining = variant.quantityInStore - currentCartQuantity;
@@ -115,7 +111,6 @@ export async function addToCart(
         cartRef,
         {
           cartId,
-          isGuest: !session,
           totalQuantity: FieldValue.increment(quantity),
           lastActiveAt: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
@@ -139,20 +134,19 @@ export async function addToCart(
 export async function removeItemFromCart(
   data: RemoveFromCartInput,
 ): Promise<CartActionResult> {
-  const result = removeFromCartSchema.safeParse(data);
-  if (!result.success) {
-    return {
-      success: false,
-      error: result.error.issues[0]?.message ?? "Invalid input",
-    };
-  }
-
-  const { variantId } = result.data;
-
   try {
+    const result = removeFromCartSchema.safeParse(data);
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error.issues[0]?.message ?? "Invalid input",
+      };
+    }
+
+    const { variantId } = result.data;
+
     const cookieStore = await cookies();
-    const session = await getUserFromSession(cookieStore, false);
-    const cartId = session?.user.uid ?? getGuestId(cookieStore);
+    const cartId = getCartId(cookieStore);
 
     if (!cartId) return { success: false, error: "Cart not found" };
 
@@ -207,8 +201,7 @@ export async function incrementOrDecreaseQuantity(
 
   try {
     const cookieStore = await cookies();
-    const session = await getUserFromSession(cookieStore, false);
-    const cartId = session ? session.user.uid : getGuestId(cookieStore);
+    const cartId = getCartId(cookieStore);
 
     if (!cartId) return { success: false, error: "Cart not found." };
 
@@ -216,7 +209,6 @@ export async function incrementOrDecreaseQuantity(
     const cartItemRef = cartRef
       .collection(collections.cartItems)
       .doc(variantId);
-    const productRef = store.collection(collections.products).doc(productId);
 
     await store.runTransaction(async (tx) => {
       const [cartSnap, cartItemSnap] = await Promise.all([
@@ -233,11 +225,16 @@ export async function incrementOrDecreaseQuantity(
       const now = FieldValue.serverTimestamp();
 
       if (type === "increase") {
+        const productRef = store
+          .collection(collections.products)
+          .doc(productId);
         const productSnap = await tx.get(productRef);
         if (!productSnap.exists)
           throw new AppError("Product does not exist anymore.", "NOT_FOUND");
 
-        const product = productSnap.data() as ProductDocument;
+        const product = normalizeProductDoc(
+          productSnap as FirebaseFirestore.QueryDocumentSnapshot,
+        );
         const variant = product.variants?.find((v) => v.id === variantId);
         if (!variant) throw new AppError("Variant not found.", "NOT_FOUND");
 
@@ -260,21 +257,23 @@ export async function incrementOrDecreaseQuantity(
       } else {
         if (itemQuantityInCart === 1) {
           tx.delete(cartItemRef);
+          tx.update(cartRef, {
+            totalQuantity: FieldValue.increment(-1),
+            totalItems: FieldValue.increment(-1),
+            updatedAt: now,
+            lastActiveAt: now,
+          });
         } else {
           tx.update(cartItemRef, {
             quantity: FieldValue.increment(-1),
             updatedAt: now,
           });
+          tx.update(cartRef, {
+            totalQuantity: FieldValue.increment(-1),
+            updatedAt: now,
+            lastActiveAt: now,
+          });
         }
-
-        tx.update(cartRef, {
-          totalQuantity: FieldValue.increment(-1),
-          updatedAt: now,
-          lastActiveAt: now,
-          ...(itemQuantityInCart === 1 && {
-            totalItems: FieldValue.increment(-1),
-          }),
-        });
       }
     });
 
@@ -289,145 +288,191 @@ export async function incrementOrDecreaseQuantity(
   }
 }
 
-export async function mergeGuestCartToUser(userId: string): Promise<void> {
+export async function associateCartWithUser(userId: string): Promise<void> {
+  if (!userId || typeof userId !== "string" || !userId.trim()) return;
+
   try {
     const cookieStore = await cookies();
-    const guestId = getGuestId(cookieStore);
+    const currentCartId = getCartId(cookieStore);
 
-    if (!guestId || guestId === userId) return;
+    const userRef = store.collection(collections.profile).doc(userId);
+    const userSnap = await userRef.get();
+    const user = userSnap.data() as Profile;
+    const storedCartId: string | undefined = user?.cartId;
 
-    const guestCartRef = store.collection(collections.cart).doc(guestId);
-    const guestItemsRef = guestCartRef.collection(collections.cartItems);
-    const guestItemsSnap = await guestItemsRef.get();
-
-    if (guestItemsSnap.empty) {
-      clearGuestSession(cookieStore);
+    if (!storedCartId) {
+      if (currentCartId) {
+        await userRef.set({ cartId: currentCartId }, { merge: true });
+      }
       return;
     }
 
-    const guestItems = guestItemsSnap.docs.map((doc) => ({
-      docRef: doc.ref,
+    if (storedCartId === currentCartId) return;
+
+    if (currentCartId) {
+      await mergeCartsIntoTarget({
+        sourceCartId: currentCartId,
+        targetCartId: storedCartId,
+      });
+    }
+
+    setCartId(storedCartId, cookieStore);
+  } catch (error) {
+    console.error("associateCartWithUser error:", error);
+  }
+}
+
+async function mergeCartsIntoTarget({
+  sourceCartId,
+  targetCartId,
+}: {
+  sourceCartId: string;
+  targetCartId: string;
+}): Promise<void> {
+  const sourceCartRef = store.collection(collections.cart).doc(sourceCartId);
+
+  await store.runTransaction(async (transaction) => {
+    const targetCartRef = store.collection(collections.cart).doc(targetCartId);
+    const sourceItemsRef = sourceCartRef.collection(collections.cartItems);
+    const targetItemsRef = targetCartRef.collection(collections.cartItems);
+
+    const [sourceItemsSnap, targetItemsSnap, targetCartSnap] =
+      await Promise.all([
+        transaction.get(sourceItemsRef),
+        transaction.get(targetItemsRef),
+        transaction.get(targetCartRef),
+      ]);
+
+    if (sourceItemsSnap.empty) return;
+
+    const sourceItems = sourceItemsSnap.docs.map((doc) => ({
+      docRef: doc.ref as DocumentReference,
       data: doc.data() as CartItem,
     }));
 
-    const productCollection = store.collection(collections.products);
     const uniqueProductIds = [
-      ...new Set(guestItems.map((item) => item.data.productId)),
+      ...new Set(sourceItems.map((item) => item.data.productId)),
     ];
-    const productRefs = uniqueProductIds.map((id) => productCollection.doc(id));
-    const productSnaps = await store.getAll(...productRefs);
+    const productRefs = uniqueProductIds.map((id) =>
+      store.collection(collections.products).doc(id),
+    );
+
+    const productSnaps = await Promise.all(
+      productRefs.map((ref) => transaction.get(ref)),
+    );
 
     const productMap = new Map(
       productSnaps.map((snap) => [
         snap.id,
-        snap.data() as ProductDocument | undefined,
+        snap.exists
+          ? normalizeProductDoc(snap as FirebaseFirestore.QueryDocumentSnapshot)
+          : undefined,
       ]),
     );
 
-    await store.runTransaction(async (transaction) => {
-      const userCartRef = store.collection(collections.cart).doc(userId);
-      const userItemsRef = userCartRef.collection(collections.cartItems);
+    const targetItemsMap = new Map(
+      targetItemsSnap.docs.map((doc) => [doc.id, doc.data() as CartItem]),
+    );
 
-      const [userItemsSnap, userCartSnap] = await Promise.all([
-        transaction.get(userItemsRef),
-        transaction.get(userCartRef),
-      ]);
+    const targetCartData = targetCartSnap.data() as Cart | undefined;
 
-      const userItemsMap = new Map(
-        userItemsSnap.docs.map((doc) => [doc.id, doc.data() as CartItem]),
-      );
+    let totalQuantityAdded = 0;
+    let totalItemsAdded = targetCartData?.totalItems ?? 0;
 
-      const userCartData = userCartSnap.data() as Cart | undefined;
+    const skippedVariantIds: string[] = [];
 
-      let totalQuantityAdded = 0;
-      let totalItemsAdded = userCartData?.totalItems ?? 0;
+    for (const { docRef: sourceItemRef, data: sourceItemData } of sourceItems) {
+      const { productId, variantId, quantity: sourceQuantity } = sourceItemData;
 
-      for (const { docRef: guestItemRef, data: guestItemData } of guestItems) {
-        const { productId, variantId, quantity: guestQuantity } = guestItemData;
+      const product = productMap.get(productId);
+      if (!product) {
+        transaction.delete(sourceItemRef);
+        continue;
+      }
 
-        const productData = productMap.get(productId);
-        if (!productData) {
-          transaction.delete(guestItemRef);
-          continue;
-        }
+      const variant = product.variants?.find((v) => v.id === variantId);
+      if (!variant) {
+        transaction.delete(sourceItemRef);
+        continue;
+      }
 
-        const variant = productData.variants?.find((v) => v.id === variantId);
-        if (!variant) {
-          transaction.delete(guestItemRef);
-          continue;
-        }
+      if (!targetItemsMap.has(variantId) && totalItemsAdded >= MAX_CART_ITEMS) {
+        skippedVariantIds.push(variantId);
+        transaction.delete(sourceItemRef);
+        continue;
+      }
 
-        if (!userItemsMap.has(variantId) && totalItemsAdded >= MAX_CART_ITEMS)
-          continue;
+      const quantityInStore = variant.quantityInStore ?? 0;
+      const targetItemRef = targetItemsRef.doc(variantId);
+      const existingTargetQuantity =
+        targetItemsMap.get(variantId)?.quantity ?? 0;
+      const proposedTotal = existingTargetQuantity + sourceQuantity;
 
-        const quantityInStore = variant.quantityInStore ?? 0;
-        const userItemRef = userItemsRef.doc(variantId); // use variantId as doc ID
-        const existingUserQuantity = userItemsMap.get(variantId)?.quantity ?? 0;
-        const proposedTotal = existingUserQuantity + guestQuantity;
+      if (proposedTotal > quantityInStore) {
+        const availableToAdd = Math.max(
+          0,
+          quantityInStore - existingTargetQuantity,
+        );
 
-        if (proposedTotal > quantityInStore) {
-          const availableToAdd = Math.max(
-            0,
-            quantityInStore - existingUserQuantity,
-          );
-
-          if (availableToAdd > 0) {
-            if (userItemsMap.has(variantId)) {
-              transaction.update(userItemRef, {
-                quantity: existingUserQuantity + availableToAdd,
-                updatedAt: FieldValue.serverTimestamp(),
-              });
-            } else {
-              transaction.set(userItemRef, {
-                ...guestItemData,
-                quantity: availableToAdd,
-                updatedAt: FieldValue.serverTimestamp(),
-              });
-              totalItemsAdded++;
-            }
-            totalQuantityAdded += availableToAdd;
-          }
-        } else {
-          if (userItemsMap.has(variantId)) {
-            transaction.update(userItemRef, {
-              quantity: proposedTotal,
+        if (availableToAdd > 0) {
+          if (targetItemsMap.has(variantId)) {
+            transaction.update(targetItemRef, {
+              quantity: existingTargetQuantity + availableToAdd,
               updatedAt: FieldValue.serverTimestamp(),
             });
           } else {
-            transaction.set(userItemRef, {
-              ...guestItemData,
-              quantity: guestQuantity,
+            transaction.set(targetItemRef, {
+              ...sourceItemData,
+              quantity: availableToAdd,
               updatedAt: FieldValue.serverTimestamp(),
             });
             totalItemsAdded++;
           }
-          totalQuantityAdded += guestQuantity;
+          totalQuantityAdded += availableToAdd;
         }
-
-        transaction.delete(guestItemRef);
+      } else {
+        if (targetItemsMap.has(variantId)) {
+          transaction.update(targetItemRef, {
+            quantity: proposedTotal,
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+        } else {
+          transaction.set(targetItemRef, {
+            ...sourceItemData,
+            quantity: sourceQuantity,
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+          totalItemsAdded++;
+        }
+        totalQuantityAdded += sourceQuantity;
       }
 
-      const existingTotal = userCartData?.totalQuantity ?? 0;
+      transaction.delete(sourceItemRef);
+    }
 
-      transaction.set(
-        userCartRef,
-        {
-          cartId: userId,
-          isGuest: false,
-          totalQuantity: existingTotal + totalQuantityAdded,
-          totalItems: totalItemsAdded,
-          lastActiveAt: FieldValue.serverTimestamp(),
-          updatedAt: FieldValue.serverTimestamp(),
-          createdAt: userCartData?.createdAt ?? FieldValue.serverTimestamp(),
-        },
-        { merge: true },
+    if (skippedVariantIds.length > 0) {
+      console.warn(
+        `mergeCartsIntoTarget: ${skippedVariantIds.length} item(s) not merged ` +
+          `because the target cart is full. ` +
+          `Skipped variantIds: ${skippedVariantIds.join(", ")}`,
       );
+    }
 
-      transaction.delete(guestCartRef);
-    });
+    const existingTotal = targetCartData?.totalQuantity ?? 0;
 
-    clearGuestSession(cookieStore);
-  } catch (error) {
-    console.error("mergeGuestCartToUser error:", error);
-  }
+    transaction.delete(sourceCartRef);
+
+    transaction.set(
+      targetCartRef,
+      {
+        cartId: targetCartId,
+        totalQuantity: existingTotal + totalQuantityAdded,
+        totalItems: totalItemsAdded,
+        lastActiveAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        createdAt: targetCartData?.createdAt ?? FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+  });
 }

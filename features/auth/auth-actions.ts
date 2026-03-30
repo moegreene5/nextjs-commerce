@@ -25,8 +25,7 @@ import { UserRecord } from "firebase-admin/auth";
 import { Route } from "next";
 import { cookies } from "next/headers";
 import { redirect, RedirectType } from "next/navigation";
-import { mergeGuestCartToUser } from "../cart/cart-actions";
-import { refresh } from "next/cache";
+import { associateCartWithUser } from "../cart/cart-actions";
 
 export async function registerCustomer(
   data: RegisterData,
@@ -98,7 +97,7 @@ export async function registerCustomer(
     redirect("/account/login?reason=registered", RedirectType.replace);
   }
 
-  await mergeGuestCartToUser(signInResult.uid);
+  await associateCartWithUser(signInResult.uid);
   await createUserSession(signInResult.idToken, await cookies());
 
   redirect("/", RedirectType.replace);
@@ -143,7 +142,7 @@ export async function logIn(
       };
     }
 
-    await mergeGuestCartToUser(signIn.uid);
+    await associateCartWithUser(signIn.uid);
     await createUserSession(signIn.idToken, await cookies());
   } catch (error) {
     console.error("Login error:", error);

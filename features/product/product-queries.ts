@@ -4,7 +4,6 @@ import {
   ProductCard,
   ProductDocument,
   ProductExtrasData,
-  ProductFilters,
 } from "@/entities/product";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { collections, store } from "@/lib/firebase/admin";
@@ -14,7 +13,7 @@ import {
   PRODUCT_CARD_FIELDS,
 } from "@/lib/product";
 import { DocumentReference, FieldPath } from "firebase-admin/firestore";
-import { cacheLife, cacheTag, unstable_cache } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 
@@ -151,7 +150,7 @@ export interface GetProductsResult {
   filteredCount: number;
 }
 
-const _getProducts = async function (
+export const getProducts = async function (
   filters: {
     isFeatured?: boolean;
     isBestSeller?: boolean;
@@ -165,6 +164,8 @@ const _getProducts = async function (
   limit: number,
   startAfterDocId: string | undefined,
 ): Promise<GetProductsResult> {
+  "use cache";
+
   const { isFeatured, isBestSeller, brand, categoryId } = filters;
   const { sortBy, sortDir } = sort;
 
@@ -239,10 +240,3 @@ const _getProducts = async function (
     filteredCount,
   };
 };
-
-export const getProducts = cache(
-  unstable_cache(_getProducts, ["all-products"], {
-    tags: [CACHE_TAGS.allProducts],
-    revalidate: 3600,
-  }),
-);

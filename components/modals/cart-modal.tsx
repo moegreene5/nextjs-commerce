@@ -133,7 +133,7 @@ export default function CartSheet() {
                 className="w-full rounded-full h-12 uppercase tracking-widest text-xs font-semibold border border-primary"
                 asChild
               >
-                <Link href="/account" onClick={() => closeModal("cart")}>
+                <Link href="/checkout" onClick={() => closeModal("cart")}>
                   Checkout
                 </Link>
               </Button>

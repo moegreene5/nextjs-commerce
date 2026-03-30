@@ -1,8 +1,8 @@
 import "./globals.css";
 
-import Footer from "@/components/footer";
-import Header from "@/components/header";
 import Modals from "@/components/modals/modal";
+import { getIsAuthenticated } from "@/features/auth/auth-queries";
+import { AuthProvider } from "@/features/auth/components/auth-provider";
 import type { Metadata } from "next";
 import { Geologica, Raleway } from "next/font/google";
 import { Toaster } from "sonner";
@@ -31,18 +31,20 @@ const geologica = Geologica({
 });
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const loggedIn = getIsAuthenticated();
+
   return (
     <html lang="en">
       <body
         className={`${raleway.className} ${raleway.variable} ${geologica.variable}`}
       >
-        <div className="flex min-h-screen flex-col">
-          <Toaster position="top-center" />
-          <Header />
-          {children}
-          <Footer />
-          <Modals />
-        </div>
+        <AuthProvider loggedIn={loggedIn}>
+          <div className="flex min-h-screen flex-col">
+            <Toaster position="top-center" />
+            {children}
+            <Modals />
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

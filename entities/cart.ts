@@ -1,3 +1,5 @@
+export const MAX_CART_ITEMS = 50;
+
 export type PriceChange =
   | { changed: false }
   | {
@@ -25,7 +27,6 @@ export type CartItem = {
 
 export type Cart = {
   cartId: string;
-  isGuest: boolean;
   totalItems: number;
   totalQuantity: number;
   subtotal: number;

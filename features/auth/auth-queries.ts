@@ -5,6 +5,8 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 
 export const getIsAuthenticated = cache(async () => {
-  const session = await getUserFromSession(await cookies());
+  const cookieStore = await cookies();
+
+  const session = await getUserFromSession(cookieStore);
   return !!session;
 });

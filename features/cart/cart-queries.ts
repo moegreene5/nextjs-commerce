@@ -3,7 +3,7 @@ import "server-only";
 import { Cart, CartItem, PriceChange } from "@/entities/cart";
 import { collections, store } from "@/lib/firebase/admin";
 import { normalizeProductDoc } from "@/lib/product";
-import { getGuestId, getUserFromSession } from "@/lib/session";
+import { getCartId } from "@/lib/session";
 import { cookies } from "next/headers";
 import { cache } from "react";
 
@@ -34,8 +34,9 @@ export function computePriceChange(
 
 export const getCart = cache(async (): Promise<GetCartResult> => {
   const cookieStore = await cookies();
-  const session = await getUserFromSession(cookieStore);
-  const cartId = session?.user.uid ?? getGuestId(cookieStore);
+
+  // Cart is always resolved from the token — auth state is irrelevant here.
+  const cartId = getCartId(cookieStore);
 
   if (!cartId) return { success: true, cart: null };
 
@@ -75,7 +76,6 @@ export const getCart = cache(async (): Promise<GetCartResult> => {
       ) as FirebaseFirestore.QueryDocumentSnapshot;
 
       const product = normalizeProductDoc(productSnap);
-
       const variant = product.variants.find((v) => v.id === d.variantId);
       const currentPrice = variant?.displayPrice ?? d.priceAtAdded;
 
@@ -104,7 +104,6 @@ export const getCart = cache(async (): Promise<GetCartResult> => {
       success: true,
       cart: {
         cartId,
-        isGuest: cartData.isGuest ?? !session,
         totalQuantity: cartData.totalQuantity ?? 0,
         totalItems: cartData.totalItems ?? 0,
         subtotal,

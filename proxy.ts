@@ -26,7 +26,7 @@ export async function proxy(request: NextRequest) {
   const isProtectedPath =
     pathname.startsWith("/account") && !isPublicAccountPath;
 
-  const user = await getUserFromSession(request.cookies, false);
+  const user = await getUserFromSession(request.cookies);
 
   if (!user) {
     if (isProtectedPath) {
