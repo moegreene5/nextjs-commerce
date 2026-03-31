@@ -287,8 +287,6 @@ export async function incrementOrDecreaseQuantity(
   }
 }
 
-// ─── associateCartWithUser ────────────────────────────────────────────────────
-
 export async function associateCartWithUser(userId: string): Promise<void> {
   if (!userId || typeof userId !== "string" || !userId.trim()) return;
 
