@@ -47,77 +47,83 @@ export async function addToCart(
       .doc(variantId);
     const productRef = store.collection(collections.products).doc(productId);
 
-    await store.runTransaction(async (transaction) => {
+    await store.runTransaction(async (tx) => {
       const [cartSnap, cartItemSnap, productSnap] = await Promise.all([
-        transaction.get(cartRef),
-        transaction.get(cartItemRef),
-        transaction.get(productRef),
+        tx.get(cartRef),
+        tx.get(cartItemRef),
+        tx.get(productRef),
       ]);
 
       if (!productSnap.exists)
-        throw new AppError("Product does not exist", "NOT_FOUND");
-
-      const product = normalizeProductDoc(
-        productSnap as FirebaseFirestore.QueryDocumentSnapshot,
-      );
+        throw new AppError("Product not found", "NOT_FOUND");
+      const product = normalizeProductDoc(productSnap as any);
       const variant = product.variants.find((v) => v.id === variantId);
       if (!variant) throw new AppError("Variant not found", "NOT_FOUND");
 
-      if (variant.quantityInStore < 1)
-        throw new AppError("Out of stock", "OUT_OF_STOCK");
-
+      const isNewUniqueItem = !cartItemSnap.exists;
       const currentTotalItems = cartSnap.exists
         ? cartSnap.data()?.totalItems ?? 0
         : 0;
 
-      if (!cartItemSnap.exists && currentTotalItems >= MAX_CART_ITEMS) {
-        throw new AppError("Your cart is full.", "CART_FULL");
+      if (isNewUniqueItem && currentTotalItems >= MAX_CART_ITEMS) {
+        throw new AppError(
+          `Cart is full (Limit: ${MAX_CART_ITEMS} items)`,
+          "CART_FULL",
+        );
       }
 
-      const currentCartQuantity = cartItemSnap.exists
+      const currentQtyInCart = cartItemSnap.exists
         ? cartItemSnap.data()?.quantity ?? 0
         : 0;
-      const totalQuantityInCart = currentCartQuantity + quantity;
+      const requestedTotal = currentQtyInCart + quantity;
 
-      if (totalQuantityInCart > variant.quantityInStore) {
-        const remaining = variant.quantityInStore - currentCartQuantity;
+      if (requestedTotal > variant.quantityInStore) {
+        const available = Math.max(
+          0,
+          variant.quantityInStore - currentQtyInCart,
+        );
         throw new AppError(
-          remaining <= 0
-            ? "This item is already at max quantity in your cart"
-            : `Only ${remaining} left in stock`,
+          available <= 0
+            ? "No more stock available"
+            : `Only ${available} more left`,
           "OUT_OF_STOCK",
         );
       }
 
+      const now = FieldValue.serverTimestamp();
+
       if (cartItemSnap.exists) {
-        transaction.update(cartItemRef, {
+        tx.update(cartItemRef, {
           quantity: FieldValue.increment(quantity),
-          updatedAt: FieldValue.serverTimestamp(),
+          updatedAt: now,
         });
       } else {
-        transaction.set(cartItemRef, {
+        tx.set(cartItemRef, {
           productId,
           variantId,
-          size: variant.size,
-          priceAtAdded: variant.displayPrice,
           quantity,
-          addedAt: FieldValue.serverTimestamp(),
-          updatedAt: FieldValue.serverTimestamp(),
+          priceAtAdded: variant.displayPrice,
+          size: variant.size,
+          addedAt: now,
+          updatedAt: now,
         });
       }
 
-      transaction.set(
-        cartRef,
-        {
-          cartId,
-          totalQuantity: FieldValue.increment(quantity),
-          lastActiveAt: FieldValue.serverTimestamp(),
-          updatedAt: FieldValue.serverTimestamp(),
-          ...(!cartSnap.exists && { createdAt: FieldValue.serverTimestamp() }),
-          ...(!cartItemSnap.exists && { totalItems: FieldValue.increment(1) }),
-        },
-        { merge: true },
-      );
+      const cartUpdate: Record<string, any> = {
+        totalQuantity: FieldValue.increment(quantity),
+        lastActiveAt: now,
+        updatedAt: now,
+      };
+
+      if (isNewUniqueItem) {
+        cartUpdate.totalItems = FieldValue.increment(1);
+      }
+
+      if (!cartSnap.exists) {
+        tx.set(cartRef, { ...cartUpdate, cartId, createdAt: now });
+      } else {
+        tx.update(cartRef, cartUpdate);
+      }
     });
 
     refresh();

@@ -1,1 +1,1 @@
-export const FREE_SHIPPING_THRESHOLD = 100_000;
+export const FREE_SHIPPING_THRESHOLD = 100;

@@ -35,7 +35,6 @@ export function computePriceChange(
 export const getCart = cache(async (): Promise<GetCartResult> => {
   const cookieStore = await cookies();
 
-  // Cart is always resolved from the token — auth state is irrelevant here.
   const cartId = getCartId(cookieStore);
 
   if (!cartId) return { success: true, cart: null };

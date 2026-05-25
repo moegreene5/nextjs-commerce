@@ -14,3 +14,18 @@ export const signupRateLimiter = new RateLimiterRedis({
   points: 5,
   duration: 600,
 });
+
+export const cartSessionLimiter = new RateLimiterRedis({
+  storeClient: redis,
+  keyPrefix: "rl_cart_session",
+  points: 15,
+  duration: 60,
+  blockDuration: 60,
+});
+
+export const ipGlobalLimiter = new RateLimiterRedis({
+  storeClient: redis,
+  keyPrefix: "rl_ip_global",
+  points: 50,
+  duration: 60,
+});

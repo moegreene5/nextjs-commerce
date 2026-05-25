@@ -1,12 +1,20 @@
 export function formatPrice(price: string | number) {
+  const format = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
+
   if (typeof price === "string") {
     const numericPrice = parseInt(price);
+
     if (!isNaN(numericPrice)) {
-      return "₦" + numericPrice?.toLocaleString("en-NG");
-    } else {
-      return price;
+      return format(numericPrice);
     }
-  } else {
-    return "₦" + price?.toLocaleString("en-NG");
+
+    return price;
   }
+
+  return format(price);
 }
