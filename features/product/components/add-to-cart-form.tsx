@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Product, ProductCard, ProductVariant } from "@/entities/product";
+import { ProductCard, ProductVariant } from "@/entities/product";
 import { addToCart } from "@/features/cart/cart-actions";
 import { useAppForm } from "@/hooks/form";
 import { useCartAlertStore } from "@/store/add-product-store";
@@ -16,6 +16,8 @@ type AddToCartFormProps = {
   product: ProductCard;
 };
 
+type QuantityValue = number | "";
+
 const AddToCartForm = ({ product }: AddToCartFormProps) => {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(
     product.variants[0],
@@ -27,10 +29,10 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
   const isOnSale = product.isOnSale && salePrice !== null;
 
   const form = useAppForm({
-    defaultValues: { quantity: 1 },
+    defaultValues: { quantity: 1 as QuantityValue },
     onSubmit: async ({ value }) => {
       const response = await addToCart({
-        quantity: value.quantity,
+        quantity: value.quantity || 1,
         productId: product.id,
         variantId: selectedVariant.id,
       });
@@ -71,26 +73,28 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
   };
 
   const handleInputChange = (raw: string) => {
-    const parsed = parseInt(raw, 10);
-    if (isNaN(parsed) || raw === "") {
-      form.setFieldValue("quantity", 1);
+    if (raw === "") {
+      form.setFieldValue("quantity", "" as QuantityValue);
       return;
     }
+    const parsed = parseInt(raw, 10);
+    if (isNaN(parsed)) return;
     if (parsed < 1) {
-      toast.error("Minimum quantity is 1");
       form.setFieldValue("quantity", 1);
       return;
     }
     if (parsed > quantityInStore) {
-      toast.error(
-        `Only ${quantityInStore} item${
-          quantityInStore === 1 ? "" : "s"
-        } left in stock`,
-      );
       form.setFieldValue("quantity", quantityInStore);
       return;
     }
     form.setFieldValue("quantity", parsed);
+  };
+
+  const handleInputBlur = (raw: string) => {
+    const parsed = parseInt(raw, 10);
+    if (isNaN(parsed) || parsed < 1) {
+      form.setFieldValue("quantity", 1);
+    }
   };
 
   return (
@@ -119,7 +123,13 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
               type="button"
               onClick={() => {
                 setSelectedVariant(variant);
-                form.setFieldValue("quantity", 1);
+                form.setFieldValue(
+                  "quantity",
+                  Math.min(
+                    form.getFieldValue("quantity") || 1,
+                    variant.quantityInStore,
+                  ),
+                );
               }}
               aria-label={`Select size ${variant.size}${
                 variant.isOutOfStock ? ", out of stock" : ""
@@ -161,9 +171,9 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
                 type="button"
                 variant="ghost"
                 className="w-fit px-0.5 disabled:opacity-30"
-                onClick={() => handleDecrement(field.state.value)}
+                onClick={() => handleDecrement(field.state.value || 1)}
                 aria-label="Decrease quantity"
-                disabled={field.state.value <= 1}
+                disabled={!field.state.value || field.state.value <= 1}
               >
                 <Minus aria-hidden="true" />
               </Button>
@@ -176,7 +186,7 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
                 className="w-12 text-center border-none shadow-none focus-visible:ring-1 focus-visible:ring-blue-300 rounded-sm p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 value={field.state.value}
                 onChange={(e) => handleInputChange(e.target.value)}
-                onBlur={field.handleBlur}
+                onBlur={(e) => handleInputBlur(e.target.value)}
                 min={1}
                 max={quantityInStore}
               />
@@ -185,9 +195,11 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
                 type="button"
                 variant="ghost"
                 className="w-fit px-0.5"
-                onClick={() => handleIncrement(field.state.value)}
+                onClick={() => handleIncrement(field.state.value || 1)}
                 aria-label="Increase quantity"
-                disabled={field.state.value >= quantityInStore}
+                disabled={
+                  !field.state.value || field.state.value >= quantityInStore
+                }
               >
                 <Plus aria-hidden="true" />
               </Button>
@@ -199,13 +211,7 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
           <form.SubscribeButton
             className="rounded-[49px] uppercase min-h-14 md:min-h-16 px-8 h-auto flex-1 tracking-widest hover:bg-white border border-primary hover:text-black disabled:opacity-50"
             disabled={isOutOfStock || form.state.isSubmitting}
-            label={
-              form.state.isSubmitting
-                ? "Adding..."
-                : isOutOfStock
-                ? "Out of Stock"
-                : "Add to Cart"
-            }
+            label={isOutOfStock ? "Out of Stock" : "Add to Cart"}
           />
         </form.AppForm>
       </form>
