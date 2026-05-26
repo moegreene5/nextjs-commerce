@@ -43,7 +43,7 @@ export async function registerCustomer(
   const { email, password, firstName, lastName, phoneNumber, username } =
     parsed.data;
 
-  const profileRef = store.collection("profile");
+  const profileRef = store.collection(collections.profile);
   let firebaseUser: UserRecord | undefined;
   let signInResult: Awaited<ReturnType<typeof signInWithEmailPassword>> | null =
     null;

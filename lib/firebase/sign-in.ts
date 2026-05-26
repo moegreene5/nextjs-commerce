@@ -1,3 +1,5 @@
+import "server-only";
+
 import { GENERIC_LOGIN_ERROR, SERVER_ERROR } from "@/entities/action";
 import { auth } from "@/lib/firebase/admin";
 

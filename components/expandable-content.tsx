@@ -25,7 +25,7 @@ export const ExpandableContent = ({
       if (!contentRef.current) return;
       const isMoreThanLines =
         contentRef.current.scrollHeight > contentRef.current.clientHeight;
-      setIsClamped(isMoreThanLines || isExpanded);
+      setIsClamped(isMoreThanLines);
     };
 
     checkClamp();
