@@ -23,15 +23,15 @@ export const ExpandableContent = ({
 
     const checkClamp = () => {
       if (!contentRef.current) return;
-      const isMoreThanLines =
-        contentRef.current.scrollHeight > contentRef.current.clientHeight;
-      setIsClamped(isMoreThanLines);
+      setIsClamped(
+        contentRef.current.scrollHeight > contentRef.current.clientHeight,
+      );
     };
 
     checkClamp();
     window.addEventListener("resize", checkClamp);
     return () => window.removeEventListener("resize", checkClamp);
-  }, [isExpanded]);
+  }, []);
 
   return (
     <div>
