@@ -3,9 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductCard, ProductVariant } from "@/entities/product";
-import { addToCart } from "@/features/cart/cart-actions";
+import { useAddToCart } from "@/features/cart/mutations";
 import { useAppForm } from "@/hooks/form";
-import { useCartAlertStore } from "@/store/add-product-store";
 import { cn } from "@/utils/cn";
 import { formatPrice } from "@/utils/format-price";
 import { Minus, Plus } from "lucide-react";
@@ -23,7 +22,7 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
     product.variants[0],
   );
 
-  const { show } = useCartAlertStore();
+  const addToCartMutation = useAddToCart();
   const { quantityInStore, isOutOfStock, displayPrice, price, salePrice } =
     selectedVariant;
   const isOnSale = product.isOnSale && salePrice !== null;
@@ -31,26 +30,17 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
   const form = useAppForm({
     defaultValues: { quantity: 1 as QuantityValue },
     onSubmit: async ({ value }) => {
-      const response = await addToCart({
-        quantity: value.quantity || 1,
+      await addToCartMutation.mutateAsync({
         productId: product.id,
         variantId: selectedVariant.id,
-      });
-
-      if (!response.success) {
-        toast.error(response.error);
-        return;
-      }
-
-      show({
-        id: product.id,
+        quantity: value.quantity || 1,
+        slug: product.slug,
         name: product.name,
         image: product.images[0]?.url,
-        slug: product.slug,
-        variantSize: selectedVariant.size,
-        displayPrice: selectedVariant.displayPrice,
-        originalPrice: selectedVariant.price,
-        isOnSale,
+        size: selectedVariant.size,
+        currentPrice: selectedVariant.displayPrice,
+        isOnSale: isOnSale,
+        originalPrice: selectedVariant.displayPrice,
       });
     },
   });

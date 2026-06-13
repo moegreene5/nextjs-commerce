@@ -4,6 +4,7 @@ import Modals from "@/components/modals/modal";
 import type { Metadata } from "next";
 import { Geologica, Raleway } from "next/font/google";
 import { Toaster } from "sonner";
+import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: {
@@ -34,11 +35,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body
         className={`${raleway.className} ${raleway.variable} ${geologica.variable}`}
       >
-        <Toaster position="top-center" />
-        <div className="flex min-h-screen flex-col">
-          {children}
-          <Modals />
-        </div>
+        <Providers>
+          <Toaster position="top-center" />
+          <div className="flex min-h-screen flex-col">
+            {children}
+            <Modals />
+          </div>
+        </Providers>
       </body>
     </html>
   );

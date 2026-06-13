@@ -126,7 +126,6 @@ export async function addToCart(
       }
     });
 
-    refresh();
     return { success: true };
   } catch (error) {
     if (error instanceof AppError)
@@ -181,7 +180,6 @@ export async function removeItemFromCart(
       });
     });
 
-    refresh();
     return { success: true };
   } catch (error) {
     if (error instanceof AppError)
@@ -282,7 +280,6 @@ export async function incrementOrDecreaseQuantity(
       }
     });
 
-    refresh();
     return { success: true };
   } catch (error) {
     const message =

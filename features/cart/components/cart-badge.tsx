@@ -1,8 +1,15 @@
-import { getCart } from "../cart-queries";
+import { getQueryClient } from "@/lib/query-client";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { cartQueryOptions } from "../queries";
 import CartBadgeClient from "./cart-badge-client";
 
 export default async function CartBadge() {
-  const cart = await getCart();
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery(cartQueryOptions());
 
-  return <CartBadgeClient data={cart} />;
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <CartBadgeClient />
+    </HydrationBoundary>
+  );
 }

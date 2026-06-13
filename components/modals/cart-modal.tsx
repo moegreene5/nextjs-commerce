@@ -1,9 +1,10 @@
 import CartItemCard from "@/features/cart/components/cart-item";
 import FreeShippingProgress from "@/features/cart/components/free-shipping-threshold";
+import { cartQueryOptions } from "@/features/cart/queries";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
-import { useCartStore } from "@/store/cart";
 import { useModalStore } from "@/store/modal";
 import { formatPrice } from "@/utils/format-price";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import {
@@ -17,11 +18,11 @@ import {
 export default function CartSheet() {
   const modals = useModalStore((s) => s.modals);
   const closeModal = useModalStore((s) => s.closeModal);
-  const data = useCartStore((s) => s.cart);
-  const cartData = data?.success ? data.cart : null;
-  const items = cartData?.items ?? [];
+  const data = useQuery(cartQueryOptions());
+  const cart = data?.data;
+  const items = cart?.items ?? [];
   const isEmpty = items.length === 0;
-  const isFree = (cartData?.subtotal ?? 0) >= FREE_SHIPPING_THRESHOLD;
+  const isFree = (cart?.subtotal ?? 0) >= FREE_SHIPPING_THRESHOLD;
 
   return (
     <Sheet open={!!modals["cart"]} onOpenChange={() => closeModal("cart")}>
@@ -42,7 +43,7 @@ export default function CartSheet() {
               Review your cart items, update quantities, and proceed to
               checkout.
             </SheetDescription>
-            <FreeShippingProgress subtotal={cartData?.subtotal ?? 0} />
+            <FreeShippingProgress subtotal={cart?.subtotal ?? 0} />
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-page">
             {isEmpty ? (
@@ -91,6 +92,7 @@ export default function CartSheet() {
                 </div>
 
                 <Button
+                  onClick={() => closeModal("cart")}
                   variant="outline"
                   className="rounded-full px-8 text-xs uppercase tracking-widest font-semibold h-10 border-stone-200 hover:border-stone-800 hover:text-stone-800 transition-colors"
                   asChild
@@ -112,8 +114,8 @@ export default function CartSheet() {
               <div className="space-y-2 font-geologica">
                 <div className="flex items-center justify-between text-xs text-primary font-semibold md:text-sm">
                   <span>
-                    Total ({cartData?.totalQuantity}{" "}
-                    {cartData?.totalQuantity === 1 ? "item" : "items"})
+                    Total ({cart?.totalQuantity}{" "}
+                    {cart?.totalQuantity === 1 ? "item" : "items"})
                   </span>
                   <span>
                     {isFree ? "Free" : "Shipping calculated at checkout"}
@@ -124,7 +126,7 @@ export default function CartSheet() {
                     Subtotal
                   </span>
                   <span className="text-sm font-semibold text-stone-900 tabular-nums font-geologica">
-                    {formatPrice(cartData?.subtotal ?? 0)}
+                    {formatPrice(cart?.subtotal ?? 0)}
                   </span>
                 </div>
               </div>

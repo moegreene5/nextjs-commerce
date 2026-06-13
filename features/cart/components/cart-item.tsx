@@ -2,18 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { CartItem } from "@/entities/cart";
-import {
-  incrementOrDecreaseQuantity,
-  removeItemFromCart,
-} from "@/features/cart/cart-actions";
 import { useModalStore } from "@/store/modal";
 import { cn } from "@/utils/cn";
 import { formatPrice } from "@/utils/format-price";
 import { Minus, Plus, Trash } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useTransition } from "react";
-import { toast } from "sonner";
+import { useRemoveFromCart, useUpdateQuantity } from "../mutations";
 
 interface CartItemProps extends Pick<
   CartItem,
@@ -43,32 +38,18 @@ export default function CartItemCard({
   isCartPage = false,
 }: CartItemProps) {
   const closeModal = useModalStore((s) => s.closeModal);
+  const removeItemFromCartMutation = useRemoveFromCart();
+  const updateQuantityMutation = useUpdateQuantity();
 
-  const [isRemoving, startRemoveTransition] = useTransition();
-  const [isUpdating, startUpdateTransition] = useTransition();
-
-  const isPending = isRemoving || isUpdating;
+  const isPending =
+    removeItemFromCartMutation.isPending || updateQuantityMutation.isPending;
 
   const handleRemove = () => {
-    startRemoveTransition(async () => {
-      const result = await removeItemFromCart({ variantId: variantId });
-      if (!result.success) {
-        toast.error(result.error);
-      }
-    });
+    removeItemFromCartMutation.mutate({ variantId });
   };
 
   const handleQuantityChange = (type: "increase" | "decrease") => {
-    startUpdateTransition(async () => {
-      const result = await incrementOrDecreaseQuantity({
-        productId: productId,
-        variantId: variantId,
-        type,
-      });
-      if (!result.success) {
-        toast.error(result.error);
-      }
-    });
+    updateQuantityMutation.mutate({ type, productId, variantId });
   };
 
   const saleActive = priceChange.changed && priceChange.direction === "down";

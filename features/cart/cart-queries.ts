@@ -1,4 +1,4 @@
-import "server-only";
+"use server";
 
 import { Cart, CartItem, PriceChange } from "@/entities/cart";
 import { collections, store } from "@/lib/firebase/admin";
@@ -12,7 +12,7 @@ export type GetCartResult =
   | { success: true; cart: null }
   | { success: false; error: string };
 
-export function computePriceChange(
+function computePriceChange(
   priceAtAdded: number,
   currentPrice: number,
 ): PriceChange {

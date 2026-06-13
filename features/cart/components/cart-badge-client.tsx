@@ -1,23 +1,17 @@
 "use client";
 
-import { useCartStore } from "@/store/cart";
 import { useModalStore } from "@/store/modal";
+import { useQuery } from "@tanstack/react-query";
 import { ShoppingCart } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
-import { GetCartResult } from "../cart-queries";
+import { cartQueryOptions } from "../queries";
 
-export default function CartBadgeClient({ data }: { data: GetCartResult }) {
+export default function CartBadgeClient() {
   const openModal = useModalStore((s) => s.openModal);
-  const setCart = useCartStore((s) => s.setCart);
   const pathname = usePathname();
-  const totalQuantity =
-    data?.success && data.cart ? data.cart.totalQuantity : 0;
+  const data = useQuery(cartQueryOptions());
+  const totalQuantity = data.data?.totalQuantity ?? 0;
   const isCartPage = pathname === "/cart";
-
-  useEffect(() => {
-    setCart(data);
-  }, [data]);
 
   return (
     <button
