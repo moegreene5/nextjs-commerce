@@ -5,7 +5,6 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel";
 import { ProductImage } from "@/entities/product";
-import { cn } from "@/utils/cn";
 import Image from "next/image";
 import { type Dispatch, type SetStateAction, useCallback } from "react";
 
@@ -37,9 +36,9 @@ export const SideImages = ({
         className="my-4 md:my-0 md:sticky md:top-18"
         orientation="vertical"
         setApi={setThumbsApi}
-        opts={{ skipSnaps: true }}
+        opts={{ skipSnaps: true, dragFree: true }}
       >
-        <CarouselContent className="mt-0 w-full flex-row md:flex-col">
+        <CarouselContent className="mt-0 w-full flex-row md:flex-col gap-4 md:gap-0">
           {images.map((image, index) => (
             <CarouselItem
               className="cursor-pointer basis-auto pl-0"
