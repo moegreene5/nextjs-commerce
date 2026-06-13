@@ -7,26 +7,11 @@ import FreeShippingProgress from "@/features/cart/components/free-shipping-thres
 import { cartQueryOptions } from "@/features/cart/queries";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
 import { formatPrice } from "@/utils/format-price";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
-function CartPageClient() {
-  const { data: cart, error } = useQuery(cartQueryOptions());
-
-  if (error)
-    return (
-      <div className="px-page py-4 md:py-8">
-        <h1 className="text-2xl font-bold font-geologica text-stone-900 tracking-tight mb-8">
-          Cart
-        </h1>
-        <div className="flex flex-col items-center justify-center py-24 text-center gap-3">
-          <p className="text-stone-400 text-sm">Failed to load your cart.</p>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/collections/shop-all">Back to Shop</Link>
-          </Button>
-        </div>
-      </div>
-    );
+function CartData() {
+  const { data: cart } = useSuspenseQuery(cartQueryOptions());
 
   if (!cart || cart.items.length === 0) {
     return (
@@ -118,7 +103,7 @@ function CartPageClient() {
   );
 }
 
-export default CartPageClient;
+export default CartData;
 
 export function CartPageSkeleton() {
   return (
@@ -157,6 +142,22 @@ export function CartPageSkeleton() {
             <Skeleton className="h-3 w-28 mx-auto mt-3 bg-gray-200" />
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+export function CartErrorState() {
+  return (
+    <div className="px-page py-4 md:py-8">
+      <h1 className="text-2xl font-bold font-geologica text-stone-900 tracking-tight mb-8">
+        Cart
+      </h1>
+      <div className="flex flex-col items-center justify-center py-24 text-center gap-3">
+        <p className="text-stone-400 text-sm">Failed to load your cart.</p>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/collections/shop-all">Back to Shop</Link>
+        </Button>
       </div>
     </div>
   );

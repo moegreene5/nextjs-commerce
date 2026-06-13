@@ -24,6 +24,7 @@
     "rate-limiter-flexible": "^9.1.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-error-boundary": "^6.1.2",
     "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",

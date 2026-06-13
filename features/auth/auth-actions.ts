@@ -26,6 +26,7 @@ import { Route } from "next";
 import { cookies } from "next/headers";
 import { redirect, RedirectType } from "next/navigation";
 import { associateCartWithUser } from "../cart/cart-actions";
+import { refresh } from "next/cache";
 
 export async function registerCustomer(
   data: RegisterData,
@@ -100,6 +101,7 @@ export async function registerCustomer(
   await associateCartWithUser(signInResult.uid);
   await createUserSession(signInResult.idToken, await cookies());
 
+  refresh();
   redirect("/", RedirectType.replace);
 }
 
@@ -144,6 +146,8 @@ export async function logIn(
 
     await associateCartWithUser(signIn.uid);
     await createUserSession(signIn.idToken, await cookies());
+
+    refresh();
   } catch (error) {
     console.error("Login error:", error);
     return { success: false, type: "server", message: SERVER_ERROR };
