@@ -5,6 +5,7 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel";
 import { ProductImage } from "@/entities/product";
+import { cn } from "@/utils/cn";
 import Image from "next/image";
 import { type Dispatch, type SetStateAction, useCallback } from "react";
 
@@ -31,37 +32,35 @@ export const SideImages = ({
   );
 
   return (
-    <div className={className}>
+    <div className={cn("", className)}>
       <Carousel
         className="my-4 md:my-0 md:sticky md:top-18"
         orientation="vertical"
         setApi={setThumbsApi}
-        opts={{ skipSnaps: true, dragFree: true }}
+        opts={{
+          skipSnaps: true,
+          watchDrag: false,
+        }}
       >
-        <CarouselContent className="mt-0 w-full flex-row md:flex-col gap-4 md:gap-0">
+        <CarouselContent className="mt-0 w-full flex-row md:flex-col justify-center gap-4">
           {images.map((image, index) => (
-            <CarouselItem
-              className="cursor-pointer basis-auto pl-0"
+            <div
+              className={cn(
+                "cursor-pointer",
+                index === current && "border-2 border-black rounded-lg",
+              )}
               key={"thumbnail_" + image.url + index}
               onClick={() => onThumbClick(index)}
             >
-              <div className="relative p-0.5">
-                <div className="relative h-22 w-22 overflow-hidden rounded-md bg-zinc-100">
-                  <Image
-                    alt={`Product image ${index + 1}`}
-                    src={image.url || `/default-product-image.svg`}
-                    fill
-                    sizes="88px"
-                    className="object-cover"
-                    loading="eager"
-                  />
-
-                  {index === current && (
-                    <div className="absolute inset-0 rounded-md border-2 border-black pointer-events-none z-10" />
-                  )}
-                </div>
-              </div>
-            </CarouselItem>
+              <Image
+                alt={`Product image ${index + 1}`}
+                src={image.url || `/default-product-image.svg`}
+                width={100}
+                height={100}
+                sizes="100px"
+                className="object-contain rounded-lg"
+              />
+            </div>
           ))}
         </CarouselContent>
       </Carousel>
