@@ -45,6 +45,7 @@ const Banner = () => {
                 className="object-cover object-center"
                 sizes="(max-width: 768px) 100vw, 50vw"
                 priority
+                fetchPriority="high"
               />
             </div>
           </div>

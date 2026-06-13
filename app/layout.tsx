@@ -34,8 +34,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body
         className={`${raleway.className} ${raleway.variable} ${geologica.variable}`}
       >
+        <Toaster position="top-center" />
         <div className="flex min-h-screen flex-col">
-          <Toaster position="top-center" />
           {children}
           <Modals />
         </div>

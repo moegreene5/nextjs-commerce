@@ -2,6 +2,7 @@ import {
   Carousel,
   CarouselApi,
   CarouselContent,
+  CarouselItem,
 } from "@/components/ui/carousel";
 import { ProductImage } from "@/entities/product";
 import { cn } from "@/utils/cn";
@@ -36,26 +37,32 @@ export const SideImages = ({
         className="my-4 md:my-0 md:sticky md:top-18"
         orientation="vertical"
         setApi={setThumbsApi}
-        opts={{ skipSnaps: true, watchDrag: false }}
+        opts={{ skipSnaps: true }}
       >
-        <CarouselContent className="mt-0 w-full flex-row justify-center gap-4 md:flex-col">
+        <CarouselContent className="mt-0 w-full flex-row md:flex-col">
           {images.map((image, index) => (
-            <div
-              className={cn(
-                "cursor-pointer",
-                index === current && "border-2 border-black",
-              )}
-              key={"thumbnail_" + image + index}
+            <CarouselItem
+              className="cursor-pointer basis-auto pl-0"
+              key={"thumbnail_" + image.url + index}
               onClick={() => onThumbClick(index)}
             >
-              <Image
-                alt={`Product image ${index + 1}`}
-                src={image.url || `/default-product-image.svg`}
-                width={100}
-                height={100}
-                sizes="100px"
-              />
-            </div>
+              <div className="relative p-0.5">
+                <div className="relative h-22 w-22 overflow-hidden rounded-md bg-zinc-100">
+                  <Image
+                    alt={`Product image ${index + 1}`}
+                    src={image.url || `/default-product-image.svg`}
+                    fill
+                    sizes="88px"
+                    className="object-cover"
+                    loading="eager"
+                  />
+
+                  {index === current && (
+                    <div className="absolute inset-0 rounded-md border-2 border-black pointer-events-none z-10" />
+                  )}
+                </div>
+              </div>
+            </CarouselItem>
           ))}
         </CarouselContent>
       </Carousel>

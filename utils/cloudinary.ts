@@ -41,5 +41,5 @@ export async function deleteImage(url: string): Promise<void> {
 }
 
 export function optimizeImage(url: string, width = 800) {
-  return url.replace("/upload/", `/upload/f_auto,q_auto:best,w_${width}/`);
+  return url.replace("/upload/", `/upload/w_${width}/`);
 }

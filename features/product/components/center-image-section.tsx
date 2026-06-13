@@ -49,7 +49,6 @@ export const CenterSection = ({
                   fill
                   priority={image.isPrimary}
                   fetchPriority={image.isPrimary ? "high" : "auto"}
-                  unoptimized
                   sizes="(max-width: 668px) 100vw, 50vw"
                   style={{ objectFit: "contain" }}
                   loading={image.isPrimary ? "eager" : "lazy"}

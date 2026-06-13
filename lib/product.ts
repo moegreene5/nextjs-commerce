@@ -92,7 +92,7 @@ export function normalizeProductCard(
     brand: data.brand,
     images: (data.images ?? []).map((img) => ({
       ...img,
-      url: optimizeImage(img.url, 550),
+      url: optimizeImage(img.url, 600),
     })),
     variants,
     sale,
@@ -126,7 +126,7 @@ export function normalizeProductDoc(
     },
     images: (data.images ?? []).map((img) => ({
       ...img,
-      url: optimizeImage(img.url, 900),
+      url: optimizeImage(img.url, 1200),
     })),
     variants,
     isFeatured: data.isFeatured ?? false,

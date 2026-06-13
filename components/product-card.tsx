@@ -86,7 +86,6 @@ const ProductCard = ({
             src={images[0]?.url}
             alt={name}
             fill
-            unoptimized
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={cn(
               "object-cover transition-opacity duration-700",
@@ -101,7 +100,6 @@ const ProductCard = ({
               src={images[1].url}
               alt={`${name} - alternate view`}
               fill
-              unoptimized
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-cover opacity-0 group-hover/image:opacity-100 transition-opacity duration-700"
             />
