@@ -11,22 +11,21 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import { Skeleton } from "./ui/skeleton";
 
-export interface ProductCardProps
-  extends Pick<
-    ProductCardType,
-    | "name"
-    | "images"
-    | "id"
-    | "variants"
-    | "brand"
-    | "slug"
-    | "sale"
-    | "isOutOfStock"
-    | "lowestPrice"
-    | "lowestOriginalPrice"
-    | "isOnSale"
-    | "hasMultipleVariants"
-  > {
+export interface ProductCardProps extends Pick<
+  ProductCardType,
+  | "name"
+  | "images"
+  | "id"
+  | "variants"
+  | "brand"
+  | "slug"
+  | "sale"
+  | "isOutOfStock"
+  | "lowestPrice"
+  | "lowestOriginalPrice"
+  | "isOnSale"
+  | "hasMultipleVariants"
+> {
   className?: string;
   showAddToCart?: boolean;
 }
@@ -47,8 +46,8 @@ const ProductCard = ({
   hasMultipleVariants,
   showAddToCart = true,
 }: ProductCardProps) => {
-  const { show } = useCartAlertStore();
   const [isPending, startTransition] = useTransition();
+  const show = useCartAlertStore((store) => store.show);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();

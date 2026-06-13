@@ -1,4 +1,4 @@
-import { ExpandableContent } from "@/components/expandable-content";
+import ExpandableContent from "@/components/expandable-content";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CACHE_TAGS } from "@/lib/cache-tags";
@@ -8,7 +8,7 @@ import remarkGfm from "remark-gfm";
 import { getProduct } from "../product-queries";
 import AddToCartForm from "./add-to-cart-form";
 import { ProductImages } from "./product-images";
-import { ShareLinks } from "./share-links";
+import ShareLinks from "./share-links";
 
 type Props = {
   params: Promise<{ slug: string }>;

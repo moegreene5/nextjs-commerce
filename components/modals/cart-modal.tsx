@@ -101,7 +101,7 @@ export default function CartSheet() {
             ) : (
               <div className="py-2">
                 {items.map((item) => (
-                  <CartItemCard key={item.variantId} item={item} />
+                  <CartItemCard key={item.variantId} {...item} />
                 ))}
               </div>
             )}

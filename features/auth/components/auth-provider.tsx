@@ -24,6 +24,7 @@ export function AuthProvider({
   children: ReactNode;
   loggedIn: Promise<boolean>;
 }) {
+  console.log("auth provider re rendered");
   return (
     <AuthContext.Provider value={{ loggedIn }}>{children}</AuthContext.Provider>
   );

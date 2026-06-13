@@ -71,12 +71,11 @@ async function CartPage() {
       <h1 className="text-2xl font-bold font-geologica text-stone-900 tracking-tight mb-4 md:mb-5">
         Your Cart ({cart.totalQuantity})
       </h1>
-
       <div className="grid lg:grid-cols-[60fr_40fr] xl:grid-cols-[65fr_35fr] gap-12 xl:gap-20 items-start">
         <div className="flex-1 min-w-0">
           <div className="divide-y divide-border">
             {cart.items.map((item) => (
-              <CartItemCard isCartPage key={item.variantId} item={item} />
+              <CartItemCard isCartPage key={item.variantId} {...item} />
             ))}
           </div>
         </div>

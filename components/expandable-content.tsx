@@ -9,7 +9,7 @@ type ExpandableContentProps = {
   lines?: 1 | 2 | 3 | 4 | 5 | 6;
 };
 
-export const ExpandableContent = ({
+const ExpandableContent = ({
   children,
   className,
   lines = 2,
@@ -57,3 +57,5 @@ export const ExpandableContent = ({
     </div>
   );
 };
+
+export default ExpandableContent;

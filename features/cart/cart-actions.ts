@@ -62,7 +62,7 @@ export async function addToCart(
 
       const isNewUniqueItem = !cartItemSnap.exists;
       const currentTotalItems = cartSnap.exists
-        ? cartSnap.data()?.totalItems ?? 0
+        ? (cartSnap.data()?.totalItems ?? 0)
         : 0;
 
       if (isNewUniqueItem && currentTotalItems >= MAX_CART_ITEMS) {
@@ -73,7 +73,7 @@ export async function addToCart(
       }
 
       const currentQtyInCart = cartItemSnap.exists
-        ? cartItemSnap.data()?.quantity ?? 0
+        ? (cartItemSnap.data()?.quantity ?? 0)
         : 0;
       const requestedTotal = currentQtyInCart + quantity;
 

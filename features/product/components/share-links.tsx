@@ -10,7 +10,7 @@ type ShareLinksProps = {
   url: string;
 };
 
-export function ShareLinks({ title, url }: ShareLinksProps) {
+function ShareLinks({ title, url }: ShareLinksProps) {
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
 
@@ -136,3 +136,5 @@ export function ShareLinks({ title, url }: ShareLinksProps) {
     </div>
   );
 }
+
+export default ShareLinks;

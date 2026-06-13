@@ -15,12 +15,33 @@ import Link from "next/link";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
-type Props = {
-  item: CartItem;
+interface CartItemProps extends Pick<
+  CartItem,
+  | "slug"
+  | "productId"
+  | "variantId"
+  | "name"
+  | "size"
+  | "image"
+  | "quantity"
+  | "priceChange"
+  | "currentPrice"
+> {
   isCartPage?: boolean;
-};
+}
 
-export default function CartItemCard({ item, isCartPage = false }: Props) {
+export default function CartItemCard({
+  slug,
+  image,
+  productId,
+  name,
+  variantId,
+  size,
+  quantity,
+  currentPrice,
+  priceChange,
+  isCartPage = false,
+}: CartItemProps) {
   const closeModal = useModalStore((s) => s.closeModal);
 
   const [isRemoving, startRemoveTransition] = useTransition();
@@ -30,7 +51,7 @@ export default function CartItemCard({ item, isCartPage = false }: Props) {
 
   const handleRemove = () => {
     startRemoveTransition(async () => {
-      const result = await removeItemFromCart({ variantId: item.variantId });
+      const result = await removeItemFromCart({ variantId: variantId });
       if (!result.success) {
         toast.error(result.error);
       }
@@ -40,8 +61,8 @@ export default function CartItemCard({ item, isCartPage = false }: Props) {
   const handleQuantityChange = (type: "increase" | "decrease") => {
     startUpdateTransition(async () => {
       const result = await incrementOrDecreaseQuantity({
-        productId: item.productId,
-        variantId: item.variantId,
+        productId: productId,
+        variantId: variantId,
         type,
       });
       if (!result.success) {
@@ -50,8 +71,7 @@ export default function CartItemCard({ item, isCartPage = false }: Props) {
     });
   };
 
-  const saleActive =
-    item.priceChange.changed && item.priceChange.direction === "down";
+  const saleActive = priceChange.changed && priceChange.direction === "down";
 
   return (
     <div
@@ -60,11 +80,11 @@ export default function CartItemCard({ item, isCartPage = false }: Props) {
         isPending && "opacity-60 pointer-events-none",
       )}
     >
-      <Link onClick={() => closeModal("cart")} href={`/product/${item.slug}`}>
+      <Link onClick={() => closeModal("cart")} href={`/product/${slug}`}>
         <div className="h-33 w-26.5 relative">
           <Image
-            src={item.image}
-            alt={item.name}
+            src={image}
+            alt={name}
             fill
             className="object-contain"
             sizes="105px"
@@ -82,13 +102,13 @@ export default function CartItemCard({ item, isCartPage = false }: Props) {
           <div className="flex flex-col gap-0.5 min-w-0">
             <Link
               onClick={() => closeModal("cart")}
-              href={`/product/${item.slug}`}
+              href={`/product/${slug}`}
               className="text-xs md:text-sm text-stone-800 leading-snug hover:text-stone-500 transition-colors line-clamp-2 font-bold"
             >
-              {item.name}
+              {name}
             </Link>
             <span className="text-[10px] text-stone-400 uppercase tracking-widest font-geologica">
-              {item.size}
+              {size}
             </span>
           </div>
 
@@ -96,7 +116,7 @@ export default function CartItemCard({ item, isCartPage = false }: Props) {
             onClick={handleRemove}
             disabled={isPending}
             className="shrink-0 text-primary hover:text-primary/75 disabled:opacity-30 transition-colors"
-            aria-label={`Remove ${item.name} from cart`}
+            aria-label={`Remove ${name} from cart`}
           >
             <Trash className="w-4 h-4" />
           </button>
@@ -114,28 +134,26 @@ export default function CartItemCard({ item, isCartPage = false }: Props) {
               <>
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-semibold font-geologica text-stone-800 tabular-nums">
-                    {formatPrice(item.currentPrice * item.quantity)}
+                    {formatPrice(currentPrice * quantity)}
                   </span>
-                  {saleActive && item.priceChange.changed && (
+                  {saleActive && priceChange.changed && (
                     <span className="text-[10px] text-stone-400 line-through tabular-nums">
-                      {formatPrice(
-                        item.priceChange.previousPrice * item.quantity,
-                      )}
+                      {formatPrice(priceChange.previousPrice * quantity)}
                     </span>
                   )}
                 </div>
 
-                {item.priceChange.changed && (
+                {priceChange.changed && (
                   <span
                     className={cn(
                       "text-[10px] tabular-nums",
-                      item.priceChange.direction === "up"
+                      priceChange.direction === "up"
                         ? "text-red-400"
                         : "text-green-500",
                     )}
                   >
-                    {item.priceChange.direction === "up" ? "↑" : "↓"}{" "}
-                    {item.priceChange.percentage.toFixed(0)}% since added
+                    {priceChange.direction === "up" ? "↑" : "↓"}{" "}
+                    {priceChange.percentage.toFixed(0)}% since added
                   </span>
                 )}
               </>
@@ -156,7 +174,7 @@ export default function CartItemCard({ item, isCartPage = false }: Props) {
             </Button>
 
             <span className="text-xs text-black font-medium w-4 text-center tabular-nums">
-              {item.quantity}
+              {quantity}
             </span>
 
             <Button
