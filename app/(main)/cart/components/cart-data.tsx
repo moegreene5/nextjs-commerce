@@ -13,7 +13,7 @@ import Link from "next/link";
 function CartData() {
   const { data: cart } = useSuspenseQuery(cartQueryOptions());
 
-  if (!cart || cart.items.length === 0) {
+  if (cart.items.length === 0) {
     return (
       <div className="px-page py-10">
         <h1 className="text-2xl font-bold font-geologica text-stone-900 tracking-tight mb-10">

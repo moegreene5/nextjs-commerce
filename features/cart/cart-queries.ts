@@ -1,43 +1,18 @@
 "use server";
 
-import { Cart, CartItem, PriceChange } from "@/entities/cart";
+import { CartItem, GetCartResult } from "@/entities/cart";
+import { computePriceChange, createEmptyCart } from "@/lib/cart";
 import { collections, store } from "@/lib/firebase/admin";
 import { normalizeProductDoc } from "@/lib/product";
 import { getCartId } from "@/lib/session";
 import { cookies } from "next/headers";
 import { cache } from "react";
 
-export type GetCartResult =
-  | { success: true; cart: Cart }
-  | { success: true; cart: null }
-  | { success: false; error: string };
-
-function computePriceChange(
-  priceAtAdded: number,
-  currentPrice: number,
-): PriceChange {
-  if (priceAtAdded === currentPrice) return { changed: false };
-
-  const direction = currentPrice > priceAtAdded ? "up" : "down";
-  const percentage = Math.abs(
-    ((currentPrice - priceAtAdded) / priceAtAdded) * 100,
-  );
-
-  return {
-    changed: true,
-    direction,
-    percentage: Math.round(percentage * 10) / 10,
-    previousPrice: priceAtAdded,
-    currentPrice,
-  };
-}
-
 export const getCart = cache(async (): Promise<GetCartResult> => {
   const cookieStore = await cookies();
-
   const cartId = getCartId(cookieStore);
 
-  if (!cartId) return { success: true, cart: null };
+  if (!cartId) return { success: true, cart: createEmptyCart("") };
 
   try {
     const cartRef = store.collection(collections.cart).doc(cartId);
@@ -51,7 +26,7 @@ export const getCart = cache(async (): Promise<GetCartResult> => {
     ]);
 
     if (!cartSnap.exists || itemsSnap.empty) {
-      return { success: true, cart: null };
+      return { success: true, cart: createEmptyCart(cartId) };
     }
 
     const cartData = cartSnap.data()!;
@@ -65,11 +40,12 @@ export const getCart = cache(async (): Promise<GetCartResult> => {
       (doc) => productSnaps.find((p) => p.id === doc.data().productId)?.exists,
     );
 
-    if (validItemDocs.length === 0) return { success: true, cart: null };
+    if (validItemDocs.length === 0) {
+      return { success: true, cart: createEmptyCart(cartId) };
+    }
 
     const items: CartItem[] = validItemDocs.map((doc) => {
       const d = doc.data();
-
       const productSnap = productSnaps.find(
         (p) => p.id === d.productId,
       ) as FirebaseFirestore.QueryDocumentSnapshot;

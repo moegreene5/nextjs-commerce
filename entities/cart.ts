@@ -45,3 +45,7 @@ export type Cart = {
   updatedAt: Date;
   createdAt: Date;
 };
+
+export type GetCartResult =
+  | { success: true; cart: Cart }
+  | { success: false; error: string };

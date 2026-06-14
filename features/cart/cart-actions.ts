@@ -1,7 +1,8 @@
 "use server";
 
-import { Cart, CartItemDocument } from "@/entities/cart";
+import { Cart, CartItem, CartItemDocument } from "@/entities/cart";
 import { Profile } from "@/entities/user";
+import { computePriceChange } from "@/lib/cart";
 import { AppError } from "@/lib/errors";
 import { collections, store } from "@/lib/firebase/admin";
 import { normalizeProductDoc } from "@/lib/product";
@@ -15,18 +16,25 @@ import {
   removeFromCartSchema,
 } from "@/schema/cart.schema";
 import { DocumentReference, FieldValue } from "firebase-admin/firestore";
-import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 
 const MAX_CART_ITEMS = 50;
 
-export type CartActionResult =
+export type AddToCartResult =
+  | { success: true; cartId: string; item: CartItem }
+  | { success: false; error: string };
+
+export type RemoveFromCartResult =
+  | { success: true }
+  | { success: false; error: string };
+
+export type UpdateQuantityResult =
   | { success: true }
   | { success: false; error: string };
 
 export async function addToCart(
   input: AddToCartInput,
-): Promise<CartActionResult> {
+): Promise<AddToCartResult> {
   try {
     const result = addToCartSchema.safeParse(input);
     if (!result.success) {
@@ -47,7 +55,9 @@ export async function addToCart(
       .doc(variantId);
     const productRef = store.collection(collections.products).doc(productId);
 
-    await store.runTransaction(async (tx) => {
+    const now = new Date();
+
+    const item = await store.runTransaction(async (tx): Promise<CartItem> => {
       const [cartSnap, cartItemSnap, productSnap] = await Promise.all([
         tx.get(cartRef),
         tx.get(cartItemRef),
@@ -90,19 +100,27 @@ export async function addToCart(
         );
       }
 
-      const now = FieldValue.serverTimestamp();
+      let addedAt: Date;
+      let priceAtAdded: number;
 
       if (cartItemSnap.exists) {
+        const existing = cartItemSnap.data() as CartItemDocument;
+        addedAt = existing.addedAt.toDate();
+        priceAtAdded = existing.priceAtAdded;
+
         tx.update(cartItemRef, {
           quantity: FieldValue.increment(quantity),
           updatedAt: now,
         });
       } else {
+        addedAt = now;
+        priceAtAdded = variant.displayPrice;
+
         tx.set(cartItemRef, {
           productId,
           variantId,
           quantity,
-          priceAtAdded: variant.displayPrice,
+          priceAtAdded,
           size: variant.size,
           addedAt: now,
           updatedAt: now,
@@ -124,9 +142,26 @@ export async function addToCart(
       } else {
         tx.update(cartRef, cartUpdate);
       }
+
+      const currentPrice = variant.displayPrice;
+
+      return {
+        productId,
+        variantId,
+        size: variant.size,
+        slug: product.slug,
+        name: product.name,
+        image: product.images[0]?.url ?? "",
+        quantity: requestedTotal,
+        priceAtAdded,
+        currentPrice,
+        priceChange: computePriceChange(priceAtAdded, currentPrice),
+        addedAt,
+        updatedAt: now,
+      };
     });
 
-    return { success: true };
+    return { success: true, cartId, item };
   } catch (error) {
     if (error instanceof AppError)
       return { error: error.message, success: false };
@@ -137,7 +172,7 @@ export async function addToCart(
 
 export async function removeItemFromCart(
   data: RemoveFromCartInput,
-): Promise<CartActionResult> {
+): Promise<RemoveFromCartResult> {
   try {
     const result = removeFromCartSchema.safeParse(data);
     if (!result.success) {
@@ -191,7 +226,7 @@ export async function removeItemFromCart(
 
 export async function incrementOrDecreaseQuantity(
   input: IncreaseOrDecreaseInput,
-): Promise<CartActionResult> {
+): Promise<UpdateQuantityResult> {
   const result = increaseOrDecreaseQuantitySchema.safeParse(input);
   if (!result.success) {
     return {

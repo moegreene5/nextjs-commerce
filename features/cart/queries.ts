@@ -1,8 +1,8 @@
-import { queryOptions } from "@tanstack/react-query";
 import type { Cart } from "@/entities/cart";
+import { queryOptions } from "@tanstack/react-query";
 import { getCart } from "./cart-queries";
 
-async function fetchCart(): Promise<Cart | null> {
+async function fetchCart(): Promise<Cart> {
   const result = await getCart();
 
   if (!result.success) {

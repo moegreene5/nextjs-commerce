@@ -7,7 +7,6 @@ import {
   ProductVariant,
   Sale,
 } from "@/entities/product";
-import { optimizeImage } from "@/utils/cloudinary";
 
 export const PRODUCT_CARD_FIELDS = [
   "name",
@@ -90,10 +89,7 @@ export function normalizeProductCard(
     slug: data.slug,
     name: data.name,
     brand: data.brand,
-    images: (data.images ?? []).map((img) => ({
-      ...img,
-      url: optimizeImage(img.url, 600),
-    })),
+    images: data.images ?? [],
     variants,
     sale,
     isOnSale,
@@ -124,10 +120,7 @@ export function normalizeProductDoc(
       id: data.category?.id ?? "",
       name: data.categoryName ?? "",
     },
-    images: (data.images ?? []).map((img) => ({
-      ...img,
-      url: optimizeImage(img.url, 1200),
-    })),
+    images: data.images ?? [],
     variants,
     isFeatured: data.isFeatured ?? false,
     isBestSeller: data.isBestSeller ?? false,

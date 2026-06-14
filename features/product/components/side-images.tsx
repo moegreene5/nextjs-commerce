@@ -2,7 +2,6 @@ import {
   Carousel,
   CarouselApi,
   CarouselContent,
-  CarouselItem,
 } from "@/components/ui/carousel";
 import { ProductImage } from "@/entities/product";
 import { cn } from "@/utils/cn";
@@ -59,6 +58,7 @@ export const SideImages = ({
                 height={100}
                 sizes="100px"
                 className="object-contain rounded-lg"
+                priority={true}
               />
             </div>
           ))}

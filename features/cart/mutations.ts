@@ -14,14 +14,7 @@ import {
   removeItemFromCart,
 } from "./cart-actions";
 import { cartQueryOptions } from "./queries";
-
-function rollback(
-  queryClient: ReturnType<typeof useQueryClient>,
-  queryKey: readonly string[],
-  previousCart?: Cart,
-) {
-  if (previousCart) queryClient.setQueryData(queryKey, previousCart);
-}
+import { createEmptyCart, recalcTotals } from "@/lib/cart";
 
 type AddToCartVariables = AddToCartInput & {
   slug: string;
@@ -32,6 +25,14 @@ type AddToCartVariables = AddToCartInput & {
   originalPrice: number | null;
   isOnSale: boolean;
 };
+
+function rollback(
+  queryClient: ReturnType<typeof useQueryClient>,
+  queryKey: readonly string[],
+  previousCart?: Cart,
+) {
+  if (previousCart) queryClient.setQueryData(queryKey, previousCart);
+}
 
 export function useAddToCart() {
   const queryClient = useQueryClient();
@@ -49,68 +50,64 @@ export function useAddToCart() {
     onMutate: async (vars) => {
       await queryClient.cancelQueries({ queryKey });
       const previousCart = queryClient.getQueryData<Cart>(queryKey);
+      const base = previousCart ?? createEmptyCart("");
+      const now = new Date();
 
-      queryClient.setQueryData<Cart | null>(queryKey, (old) => {
-        const now = new Date();
+      const existing = base.items.find((i) => i.variantId === vars.variantId);
 
-        const newItem: CartItem = {
-          productId: vars.productId,
-          variantId: vars.variantId,
-          size: vars.size,
-          slug: vars.slug,
-          name: vars.name,
-          image: vars.image,
-          quantity: vars.quantity,
-          priceAtAdded: vars.currentPrice,
-          currentPrice: vars.currentPrice,
-          priceChange: { changed: false },
-          addedAt: now,
-          updatedAt: now,
-        };
+      const newItem: CartItem = {
+        productId: vars.productId,
+        variantId: vars.variantId,
+        size: vars.size,
+        slug: vars.slug,
+        name: vars.name,
+        image: vars.image,
+        quantity: vars.quantity,
+        priceAtAdded: vars.currentPrice,
+        currentPrice: vars.currentPrice,
+        priceChange: { changed: false },
+        addedAt: now,
+        updatedAt: now,
+      };
 
-        if (!old) {
-          return {
-            cartId: "",
-            items: [newItem],
-            totalItems: 1,
-            totalQuantity: vars.quantity,
-            subtotal: vars.currentPrice * vars.quantity,
-            lastActiveAt: now,
-            updatedAt: now,
-            createdAt: now,
-          };
-        }
+      const items = existing
+        ? base.items.map((i) =>
+            i.variantId === vars.variantId
+              ? { ...i, quantity: i.quantity + vars.quantity, updatedAt: now }
+              : i,
+          )
+        : [newItem, ...base.items];
 
-        const existing = old.items.find((i) => i.variantId === vars.variantId);
-
-        const items = existing
-          ? old.items.map((i) =>
-              i.variantId === vars.variantId
-                ? { ...i, quantity: i.quantity + vars.quantity, updatedAt: now }
-                : i,
-            )
-          : [...old.items, newItem].sort(
-              (a, b) => b.addedAt.getTime() - a.addedAt.getTime(),
-            );
-
-        return {
-          ...old,
-          items,
-          totalItems: existing ? old.totalItems : old.totalItems + 1,
-          totalQuantity: old.totalQuantity + vars.quantity,
-          subtotal: old.subtotal + vars.currentPrice * vars.quantity,
-          lastActiveAt: now,
-          updatedAt: now,
-        };
+      queryClient.setQueryData<Cart>(queryKey, {
+        ...base,
+        items,
+        ...recalcTotals(items),
+        lastActiveAt: now,
+        updatedAt: now,
       });
 
       return { previousCart };
     },
+
     onSuccess: (result, vars, ctx) => {
       if (!result.success) {
         rollback(queryClient, queryKey, ctx?.previousCart);
         toast.error(result.error);
+        return;
       }
+
+      queryClient.setQueryData<Cart>(queryKey, (old) => {
+        const base = old ?? createEmptyCart(result.cartId);
+        const items = base.items.map((i) =>
+          i.variantId === result.item.variantId ? result.item : i,
+        );
+        return {
+          ...base,
+          cartId: result.cartId,
+          items,
+          ...recalcTotals(items),
+        };
+      });
 
       show({
         id: vars.productId,
@@ -123,6 +120,7 @@ export function useAddToCart() {
         isOnSale: vars.isOnSale,
       });
     },
+
     onError: (_err, _vars, ctx) => {
       rollback(queryClient, queryKey, ctx?.previousCart);
       toast.error("Failed to add item to cart");
@@ -140,22 +138,11 @@ export function useRemoveFromCart() {
     onMutate: async (vars) => {
       await queryClient.cancelQueries({ queryKey });
       const previousCart = queryClient.getQueryData<Cart>(queryKey);
-      const now = new Date();
 
       queryClient.setQueryData<Cart>(queryKey, (old) => {
         if (!old) return old;
-        const removed = old.items.find((i) => i.variantId === vars.variantId);
-        if (!removed) return old;
-
-        return {
-          ...old,
-          items: old.items.filter((i) => i.variantId !== vars.variantId),
-          totalItems: old.totalItems - 1,
-          totalQuantity: old.totalQuantity - removed.quantity,
-          subtotal: old.subtotal - removed.currentPrice * removed.quantity,
-          lastActiveAt: now,
-          updatedAt: now,
-        };
+        const items = old.items.filter((i) => i.variantId !== vars.variantId);
+        return { ...old, items, ...recalcTotals(items), updatedAt: new Date() };
       });
 
       return { previousCart };
@@ -167,6 +154,7 @@ export function useRemoveFromCart() {
         toast.error(result.error);
       }
     },
+
     onError: (_err, _vars, ctx) => {
       rollback(queryClient, queryKey, ctx?.previousCart);
       toast.error("Failed to remove item");
@@ -194,25 +182,16 @@ export function useUpdateQuantity() {
         if (!target) return old;
 
         const newQuantity = target.quantity + delta;
-        const itemRemoved = newQuantity <= 0;
+        const items =
+          newQuantity <= 0
+            ? old.items.filter((i) => i.variantId !== vars.variantId)
+            : old.items.map((i) =>
+                i.variantId === vars.variantId
+                  ? { ...i, quantity: newQuantity, updatedAt: now }
+                  : i,
+              );
 
-        const items = itemRemoved
-          ? old.items.filter((i) => i.variantId !== vars.variantId)
-          : old.items.map((i) =>
-              i.variantId === vars.variantId
-                ? { ...i, quantity: newQuantity, updatedAt: now }
-                : i,
-            );
-
-        return {
-          ...old,
-          items,
-          totalItems: itemRemoved ? old.totalItems - 1 : old.totalItems,
-          totalQuantity: old.totalQuantity + delta,
-          subtotal: old.subtotal + delta * target.currentPrice,
-          lastActiveAt: now,
-          updatedAt: now,
-        };
+        return { ...old, items, ...recalcTotals(items), updatedAt: now };
       });
 
       return { previousCart };
@@ -224,6 +203,7 @@ export function useUpdateQuantity() {
         toast.error(result.error);
       }
     },
+
     onError: (_err, _vars, ctx) => {
       rollback(queryClient, queryKey, ctx?.previousCart);
       toast.error("Failed to update quantity");

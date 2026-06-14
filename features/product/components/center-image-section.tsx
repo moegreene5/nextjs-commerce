@@ -48,10 +48,8 @@ export const CenterSection = ({
                   src={image.url}
                   fill
                   priority={image.isPrimary}
-                  fetchPriority={image.isPrimary ? "high" : "auto"}
                   sizes="(max-width: 668px) 100vw, 50vw"
                   style={{ objectFit: "contain" }}
-                  loading={image.isPrimary ? "eager" : "lazy"}
                 />
               </CarouselItem>
             ))}
