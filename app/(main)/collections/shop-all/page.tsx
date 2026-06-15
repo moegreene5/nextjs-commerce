@@ -33,8 +33,7 @@ export default async function Page({
             src="/images/com-9.jpg"
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 50vw"
-            priority
-            fetchPriority="high"
+            priority={true}
           />
         </div>
         <div className="flex flex-col justify-center px-page gap-4 py-10 md:py-0 md:order-1">

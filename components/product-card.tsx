@@ -2,7 +2,6 @@
 
 import { ProductCard as ProductCardType } from "@/entities/product";
 import { useAddToCart } from "@/features/cart/mutations";
-import { useCartAlertStore } from "@/store/add-product-store";
 import { cn } from "@/utils/cn";
 import { formatPrice } from "@/utils/format-price";
 import Image from "next/image";
@@ -45,7 +44,6 @@ const ProductCard = ({
   showAddToCart = true,
 }: ProductCardProps) => {
   const addToCartMutation = useAddToCart();
-  const show = useCartAlertStore((store) => store.show);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -53,36 +51,18 @@ const ProductCard = ({
 
     const firstVariant = variants[0];
 
-    addToCartMutation.mutate(
-      {
-        productId: id,
-        variantId: firstVariant.id,
-        quantity: 1,
-        slug,
-        name,
-        image: images[0]?.url,
-        size: firstVariant.size,
-        currentPrice: firstVariant.displayPrice,
-        isOnSale: isOnSale,
-        originalPrice: firstVariant.displayPrice,
-      },
-      {
-        onSuccess: (result) => {
-          if (!result.success) return;
-
-          show({
-            id,
-            name,
-            image: images[0]?.url,
-            slug,
-            variantSize: firstVariant.size,
-            displayPrice: firstVariant.displayPrice,
-            originalPrice: firstVariant.price,
-            isOnSale,
-          });
-        },
-      },
-    );
+    addToCartMutation.mutate({
+      productId: id,
+      variantId: firstVariant.id,
+      quantity: 1,
+      slug,
+      name,
+      image: images[0]?.url,
+      size: firstVariant.size,
+      currentPrice: firstVariant.displayPrice,
+      isOnSale: isOnSale,
+      originalPrice: firstVariant.displayPrice,
+    });
   };
 
   const isPending = addToCartMutation.isPending;
