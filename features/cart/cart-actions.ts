@@ -118,6 +118,7 @@ export async function addToCart(
         tx.update(cartItemRef, {
           quantity: FieldValue.increment(quantity),
           updatedAt: now,
+          addedAt: now,
         });
       } else {
         addedAt = now;
