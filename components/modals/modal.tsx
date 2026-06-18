@@ -12,9 +12,7 @@ export default function Modals() {
       {Object.entries(modals).map(([key, value]) => {
         return (
           <React.Fragment key={key}>
-            {(value || key === "cart") && (
-              <ModalFactory key={key} type={key as Modal} />
-            )}
+            {value && <ModalFactory key={key} type={key as Modal} />}
           </React.Fragment>
         );
       })}

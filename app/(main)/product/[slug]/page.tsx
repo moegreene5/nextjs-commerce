@@ -21,12 +21,10 @@ export async function generateStaticParams() {
 export default async function Page({ params }: PageProps<"/product/[slug]">) {
   return (
     <main>
-      <Container>
-        <div className="min-h-[calc(100svh-66px)] py-4">
-          <Suspense fallback={<ProductSkeleton />}>
-            <Product params={params} />
-          </Suspense>
-        </div>
+      <Container className="py-4">
+        <Suspense fallback={<ProductSkeleton />}>
+          <Product params={params} />
+        </Suspense>
       </Container>
       <Suspense fallback={<RelatedProductsSkeleton />}>
         <RelatedProducts params={params} />

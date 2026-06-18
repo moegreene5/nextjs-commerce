@@ -1,6 +1,11 @@
 "use server";
 
-import { Cart, CartItem, CartItemDocument } from "@/entities/cart";
+import {
+  Cart,
+  CartDocumentUpdate,
+  CartItem,
+  CartItemDocument,
+} from "@/entities/cart";
 import { Profile } from "@/entities/user";
 import { computePriceChange } from "@/lib/cart";
 import { AppError } from "@/lib/errors";
@@ -66,7 +71,9 @@ export async function addToCart(
 
       if (!productSnap.exists)
         throw new AppError("Product not found", "NOT_FOUND");
-      const product = normalizeProductDoc(productSnap as any);
+      const product = normalizeProductDoc(
+        productSnap as FirebaseFirestore.QueryDocumentSnapshot,
+      );
       const variant = product.variants.find((v) => v.id === variantId);
       if (!variant) throw new AppError("Variant not found", "NOT_FOUND");
 
@@ -127,7 +134,7 @@ export async function addToCart(
         });
       }
 
-      const cartUpdate: Record<string, any> = {
+      const cartUpdate: CartDocumentUpdate = {
         totalQuantity: FieldValue.increment(quantity),
         lastActiveAt: now,
         updatedAt: now,
@@ -325,13 +332,23 @@ export async function incrementOrDecreaseQuantity(
   }
 }
 
-export async function associateCartWithUser(userId: string): Promise<void> {
-  if (!userId || typeof userId !== "string" || !userId.trim()) return;
+export type AssociateCartResult =
+  | { status: "no_action" }
+  | { status: "merged" }
+  | { status: "error"; error: string };
+
+export async function associateCartWithUser(
+  userId: string,
+): Promise<AssociateCartResult> {
+  if (!userId?.trim()) return { status: "no_action" };
+
+  const cookieStore = await cookies();
+  const currentCartId = getCartId(cookieStore);
+  if (!currentCartId) {
+    return { status: "no_action" };
+  }
 
   try {
-    const cookieStore = await cookies();
-    const currentCartId = getCartId(cookieStore);
-
     const userRef = store.collection(collections.profile).doc(userId);
 
     const storedCartId = await store.runTransaction(async (transaction) => {
@@ -347,7 +364,9 @@ export async function associateCartWithUser(userId: string): Promise<void> {
       return existing;
     });
 
-    if (!storedCartId || storedCartId === currentCartId) return;
+    if (!storedCartId || storedCartId === currentCartId) {
+      return { status: "no_action" };
+    }
 
     if (currentCartId) {
       await mergeCartsIntoTarget({
@@ -357,8 +376,10 @@ export async function associateCartWithUser(userId: string): Promise<void> {
     }
 
     setCartId(storedCartId, cookieStore);
+    return { status: "merged" };
   } catch (error) {
     console.error("associateCartWithUser error:", error);
+    return { status: "error", error: "Failed to associate cart" };
   }
 }
 
@@ -396,7 +417,6 @@ async function mergeCartsIntoTarget({
     const productRefs = uniqueProductIds.map((id) =>
       store.collection(collections.products).doc(id),
     );
-
     const productSnaps = await Promise.all(
       productRefs.map((ref) => transaction.get(ref)),
     );
@@ -419,9 +439,9 @@ async function mergeCartsIntoTarget({
 
     const targetCartData = targetCartSnap.data() as Cart | undefined;
 
+    const initialTargetItemCount = targetItemsSnap.docs.length;
+    let newItemsAdded = 0;
     let totalQuantityAdded = 0;
-    let totalItemsAdded = targetCartData?.totalItems ?? 0;
-
     const skippedVariantIds: string[] = [];
 
     for (const { docRef: sourceItemRef, data: sourceItemData } of sourceItems) {
@@ -439,7 +459,11 @@ async function mergeCartsIntoTarget({
         continue;
       }
 
-      if (!targetItemsMap.has(variantId) && totalItemsAdded >= MAX_CART_ITEMS) {
+      const currentTargetItemCount = initialTargetItemCount + newItemsAdded;
+      if (
+        !targetItemsMap.has(variantId) &&
+        currentTargetItemCount >= MAX_CART_ITEMS
+      ) {
         skippedVariantIds.push(variantId);
         transaction.delete(sourceItemRef);
         continue;
@@ -450,6 +474,7 @@ async function mergeCartsIntoTarget({
       const existingTargetQuantity =
         targetItemsMap.get(variantId)?.quantity ?? 0;
       const proposedTotal = existingTargetQuantity + sourceQuantity;
+      const isNewItem = !targetItemsMap.has(variantId);
 
       if (proposedTotal > quantityInStore) {
         const availableToAdd = Math.max(
@@ -458,34 +483,34 @@ async function mergeCartsIntoTarget({
         );
 
         if (availableToAdd > 0) {
-          if (targetItemsMap.has(variantId)) {
+          if (!isNewItem) {
             transaction.update(targetItemRef, {
               quantity: existingTargetQuantity + availableToAdd,
-              updatedAt: FieldValue.serverTimestamp(),
+              updatedAt: new Date(),
             });
           } else {
             transaction.set(targetItemRef, {
               ...sourceItemData,
               quantity: availableToAdd,
-              updatedAt: FieldValue.serverTimestamp(),
+              updatedAt: new Date(),
             });
-            totalItemsAdded++;
+            newItemsAdded++;
           }
           totalQuantityAdded += availableToAdd;
         }
       } else {
-        if (targetItemsMap.has(variantId)) {
+        if (!isNewItem) {
           transaction.update(targetItemRef, {
             quantity: proposedTotal,
-            updatedAt: FieldValue.serverTimestamp(),
+            updatedAt: new Date(),
           });
         } else {
           transaction.set(targetItemRef, {
             ...sourceItemData,
             quantity: sourceQuantity,
-            updatedAt: FieldValue.serverTimestamp(),
+            updatedAt: new Date(),
           });
-          totalItemsAdded++;
+          newItemsAdded++;
         }
         totalQuantityAdded += sourceQuantity;
       }
@@ -495,25 +520,24 @@ async function mergeCartsIntoTarget({
 
     if (skippedVariantIds.length > 0) {
       console.warn(
-        `mergeCartsIntoTarget: ${skippedVariantIds.length} item(s) not merged ` +
-          `because the target cart is full. ` +
-          `Skipped variantIds: ${skippedVariantIds.join(", ")}`,
+        `mergeCartsIntoTarget: ${skippedVariantIds.length} item(s) skipped. ` +
+          `variantIds: ${skippedVariantIds.join(", ")}`,
       );
     }
 
-    const existingTotal = targetCartData?.totalQuantity ?? 0;
+    const now = new Date();
 
     transaction.delete(sourceCartRef);
-
     transaction.set(
       targetCartRef,
       {
         cartId: targetCartId,
-        totalQuantity: existingTotal + totalQuantityAdded,
-        totalItems: totalItemsAdded,
-        lastActiveAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-        createdAt: targetCartData?.createdAt ?? FieldValue.serverTimestamp(),
+        totalQuantity:
+          (targetCartData?.totalQuantity ?? 0) + totalQuantityAdded,
+        totalItems: initialTargetItemCount + newItemsAdded,
+        lastActiveAt: now,
+        updatedAt: now,
+        createdAt: targetCartData?.createdAt ?? now,
       },
       { merge: true },
     );

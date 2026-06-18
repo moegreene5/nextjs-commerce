@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title: "All Products | Shop All",
 };
 
-export default async function Page({
+export default function Page({
   searchParams,
 }: PageProps<"/collections/shop-all">) {
   return (
@@ -74,20 +74,10 @@ async function AllProducts({ searchParams }: Props) {
 
   const filters = buildFilters({ brand, category, sort, featured, bestseller });
 
-  const { products, hasMore, lastDocId, filteredCount } = await getProducts(
-    {
-      isFeatured: filters.isFeatured,
-      isBestSeller: filters.isBestSeller,
-      brand: filters.brand,
-      categoryId: filters.categoryId,
-    },
-    {
-      sortBy: filters.sortBy ?? "createdAt",
-      sortDir: filters.sortDir ?? "desc",
-    },
-    PAGE_SIZE,
-    filters.startAfterDocId,
-  );
+  const { products, hasMore, lastDocId, filteredCount } = await getProducts({
+    ...filters,
+    limit: PAGE_SIZE,
+  });
 
   return (
     <ProductFeed

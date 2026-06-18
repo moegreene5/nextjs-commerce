@@ -1,3 +1,5 @@
+import { FieldValue } from "firebase-admin/firestore";
+
 export const MAX_CART_ITEMS = 50;
 
 export type PriceChange =
@@ -44,6 +46,15 @@ export type Cart = {
   lastActiveAt: Date;
   updatedAt: Date;
   createdAt: Date;
+};
+
+export type CartDocumentUpdate = {
+  totalQuantity: FieldValue;
+  lastActiveAt: Date;
+  updatedAt: Date;
+  totalItems?: FieldValue;
+  cartId?: string;
+  createdAt?: Date;
 };
 
 export type GetCartResult =

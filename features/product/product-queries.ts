@@ -4,6 +4,7 @@ import {
   ProductCard,
   ProductDocument,
   ProductExtrasData,
+  ProductFilters,
 } from "@/entities/product";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { collections, store } from "@/lib/firebase/admin";
@@ -16,6 +17,7 @@ import { DocumentReference, FieldPath } from "firebase-admin/firestore";
 import { cacheLife, cacheTag } from "next/cache";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { PAGE_SIZE } from "./search-params";
 
 export const getProduct = cache(async (slug: string) => {
   if (!slug || typeof slug !== "string") notFound();
@@ -150,24 +152,53 @@ export interface GetProductsResult {
   filteredCount: number;
 }
 
-export const getProducts = async function (
-  filters: {
-    isFeatured?: boolean;
-    isBestSeller?: boolean;
-    brand?: string | string[];
-    categoryId?: string | string[];
-  },
-  sort: {
-    sortBy: "createdAt" | "name";
-    sortDir: "asc" | "desc";
-  },
-  limit: number,
-  startAfterDocId: string | undefined,
-): Promise<GetProductsResult> {
-  "use cache";
+function isDefaultView(filters: ProductFilters): boolean {
+  return (
+    filters.isFeatured === undefined &&
+    filters.isBestSeller === undefined &&
+    filters.brand === undefined &&
+    filters.categoryId === undefined &&
+    filters.startAfterDocId === undefined &&
+    filters.sortBy === "createdAt" &&
+    filters.sortDir === "desc"
+  );
+}
 
-  const { isFeatured, isBestSeller, brand, categoryId } = filters;
-  const { sortBy, sortDir } = sort;
+export async function getProducts(
+  filters: ProductFilters,
+): Promise<GetProductsResult> {
+  if (isDefaultView(filters)) {
+    return getDefaultProducts(filters.limit ?? PAGE_SIZE);
+  }
+
+  return getProductsUncached(filters);
+}
+
+async function getDefaultProducts(limit: number): Promise<GetProductsResult> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(CACHE_TAGS.allProducts);
+
+  return getProductsUncached({
+    sortBy: "createdAt",
+    sortDir: "desc",
+    limit,
+  });
+}
+
+async function getProductsUncached(
+  filters: ProductFilters,
+): Promise<GetProductsResult> {
+  const {
+    isFeatured,
+    isBestSeller,
+    brand,
+    categoryId,
+    sortBy = "createdAt",
+    sortDir = "desc",
+    limit = PAGE_SIZE,
+    startAfterDocId,
+  } = filters;
 
   let baseQuery: FirebaseFirestore.Query = store
     .collection(collections.products)
@@ -220,12 +251,7 @@ export const getProducts = async function (
   const filteredCount = filteredCountSnap.data().count;
 
   if (paginatedSnap.empty) {
-    return {
-      products: [],
-      lastDocId: null,
-      hasMore: false,
-      filteredCount,
-    };
+    return { products: [], lastDocId: null, hasMore: false, filteredCount };
   }
 
   const hasMore = paginatedSnap.docs.length > limit;
@@ -239,4 +265,4 @@ export const getProducts = async function (
     hasMore,
     filteredCount,
   };
-};
+}

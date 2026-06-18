@@ -1,6 +1,7 @@
 import "./globals.css";
 
 import Modals from "@/components/modals/modal";
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Geologica, Raleway } from "next/font/google";
 import { Toaster } from "sonner";
@@ -42,6 +43,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <Modals />
           </div>
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
