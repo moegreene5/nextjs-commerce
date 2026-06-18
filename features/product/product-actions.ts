@@ -235,18 +235,5 @@ export async function fetchMoreProducts(
   filters: ProductFilters,
   cursor: string,
 ) {
-  return getProducts(
-    {
-      isFeatured: filters.isFeatured,
-      isBestSeller: filters.isBestSeller,
-      brand: filters.brand,
-      categoryId: filters.categoryId,
-    },
-    {
-      sortBy: filters.sortBy ?? "createdAt",
-      sortDir: filters.sortDir ?? "desc",
-    },
-    PAGE_SIZE,
-    cursor,
-  );
+  return getProducts({ ...filters, limit: PAGE_SIZE, startAfterDocId: cursor });
 }
