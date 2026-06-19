@@ -11,17 +11,33 @@ interface CartAlertProduct {
   isOnSale: boolean;
 }
 
-interface CartAlertStore {
+interface CartAlertState {
   product: CartAlertProduct | null;
-  show: (product: CartAlertProduct) => void;
-  clear: () => void;
 }
 
-export const useCartAlertStore = create<CartAlertStore>((set) => ({
+let alertTimeoutId: NodeJS.Timeout | null = null;
+
+export const useCartAlertStore = create<CartAlertState>(() => ({
   product: null,
-  show: (product) => {
-    set({ product });
-    setTimeout(() => set({ product: null }), 4000);
-  },
-  clear: () => set({ product: null }),
 }));
+
+export const show = (product: CartAlertProduct) => {
+  if (alertTimeoutId) {
+    clearTimeout(alertTimeoutId);
+  }
+
+  useCartAlertStore.setState({ product });
+
+  alertTimeoutId = setTimeout(() => {
+    useCartAlertStore.setState({ product: null });
+    alertTimeoutId = null;
+  }, 4000);
+};
+
+export const clear = () => {
+  if (alertTimeoutId) {
+    clearTimeout(alertTimeoutId);
+    alertTimeoutId = null;
+  }
+  useCartAlertStore.setState({ product: null });
+};

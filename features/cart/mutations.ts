@@ -7,7 +7,7 @@ import type {
   IncreaseOrDecreaseInput,
   RemoveFromCartInput,
 } from "@/schema/cart.schema";
-import { useCartAlertStore } from "@/store/add-product-store";
+import { show } from "@/store/add-product-store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -30,7 +30,6 @@ type AddToCartVariables = AddToCartInput & {
 export function useAddToCart() {
   const queryClient = useQueryClient();
   const { queryKey } = cartQueryOptions();
-  const show = useCartAlertStore((s) => s.show);
 
   return useMutation({
     mutationFn: (vars: AddToCartVariables) =>

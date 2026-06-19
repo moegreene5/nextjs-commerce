@@ -2,7 +2,7 @@ import CartItemCard from "@/features/cart/components/cart-item";
 import FreeShippingProgress from "@/features/cart/components/free-shipping-threshold";
 import { cartQueryOptions } from "@/features/cart/queries";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
-import { useModalStore } from "@/store/modal";
+import { closeModal, useModalStore } from "@/store/modal";
 import { formatPrice } from "@/utils/format-price";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -17,7 +17,6 @@ import {
 
 export default function CartSheet() {
   const isCartOpen = useModalStore((s) => !!s.modals["cart"]);
-  const closeModal = useModalStore((s) => s.closeModal);
   const data = useQuery(cartQueryOptions());
   const cart = data?.data;
   const items = cart?.items ?? [];

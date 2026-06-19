@@ -6,30 +6,33 @@ type ModalEntityMap = {
 
 export type Modal = keyof ModalEntityMap;
 
-type ModalStore = {
+type ModalState = {
   modals: Partial<Record<Modal, boolean>>;
   selectedEntity: Partial<{ [k in Modal]: ModalEntityMap[k] | null }>;
-  openModal: <k extends Modal>(modal: k, entity: ModalEntityMap[k]) => void;
-  closeModal: (modal: Modal) => void;
-  closeAllModals: () => void;
 };
 
-export const useModalStore = create<ModalStore>((set) => ({
+export const useModalStore = create<ModalState>(() => ({
   modals: {},
   selectedEntity: {},
-  openModal: (modal, entity) =>
-    set((state) => ({
-      modals: { ...state.modals, [modal]: true },
-      selectedEntity: { ...state.selectedEntity, [modal]: entity },
-    })),
-  closeModal: (modal) =>
-    set((state) => ({
-      modals: { ...state.modals, [modal]: false },
-      selectedEntity: { ...state.selectedEntity, [modal]: null },
-    })),
-  closeAllModals: () =>
-    set(() => ({
-      modals: {},
-      selectedEntity: {},
-    })),
 }));
+
+export const openModal = <k extends Modal>(
+  modal: k,
+  entity: ModalEntityMap[k],
+) =>
+  useModalStore.setState((state) => ({
+    modals: { ...state.modals, [modal]: true },
+    selectedEntity: { ...state.selectedEntity, [modal]: entity },
+  }));
+
+export const closeModal = (modal: Modal) =>
+  useModalStore.setState((state) => ({
+    modals: { ...state.modals, [modal]: false },
+    selectedEntity: { ...state.selectedEntity, [modal]: null },
+  }));
+
+export const closeAllModals = () =>
+  useModalStore.setState(() => ({
+    modals: {},
+    selectedEntity: {},
+  }));

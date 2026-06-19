@@ -1,13 +1,12 @@
 "use client";
 
-import { useModalStore } from "@/store/modal";
+import { openModal } from "@/store/modal";
 import { useQuery } from "@tanstack/react-query";
 import { ShoppingCart } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cartQueryOptions } from "../queries";
 
 export default function CartBadgeClient() {
-  const openModal = useModalStore((s) => s.openModal);
   const pathname = usePathname();
   const data = useQuery(cartQueryOptions());
   const totalQuantity = data.data?.totalQuantity ?? 0;

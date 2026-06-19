@@ -2,13 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { CartItem } from "@/entities/cart";
-import { useModalStore } from "@/store/modal";
 import { cn } from "@/utils/cn";
 import { formatPrice } from "@/utils/format-price";
 import { Minus, Plus, Trash } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRemoveFromCart, useUpdateQuantity } from "../mutations";
+import { closeModal } from "@/store/modal";
 
 interface CartItemProps extends Pick<
   CartItem,
@@ -37,7 +37,6 @@ export default function CartItemCard({
   priceChange,
   isCartPage = false,
 }: CartItemProps) {
-  const closeModal = useModalStore((s) => s.closeModal);
   const removeItemFromCartMutation = useRemoveFromCart();
   const updateQuantityMutation = useUpdateQuantity();
 

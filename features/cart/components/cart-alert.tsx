@@ -2,8 +2,8 @@
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { useCartAlertStore } from "@/store/add-product-store";
-import { useModalStore } from "@/store/modal";
+import { clear, useCartAlertStore } from "@/store/add-product-store";
+import { openModal } from "@/store/modal";
 import { cn } from "@/utils/cn";
 import { formatPrice } from "@/utils/format-price";
 import Image from "next/image";
@@ -14,15 +14,14 @@ type Props = {
 };
 
 export function CartAlert({ className }: Props) {
-  const { product, clear } = useCartAlertStore();
-  const openModal = useModalStore((s) => s.openModal);
+  const product = useCartAlertStore((s) => s.product);
 
   if (!product) return null;
 
   return (
     <Alert
       className={cn(
-        "border-border absolute right-[2%] top-22 z-50 w-[90vw] max-w-102.5 min-w-70 text-black border bg-[rgb(225,225,225,0.5)]  backdrop-blur-2xl transition-all md:top-18 md:min-w-87.5",
+        "group border-border absolute right-[2%] top-22 z-50 w-[90vw] max-w-102.5 min-w-70 text-black border bg-[rgb(225,225,225,0.5)]  backdrop-blur-2xl transition-all md:top-18 md:min-w-87.5",
         className,
       )}
     >
