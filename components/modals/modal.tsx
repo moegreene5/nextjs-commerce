@@ -1,13 +1,13 @@
 "use client";
 
 import { Modal, useModalStore } from "@/store/modal";
-import { useShallow } from "zustand/react/shallow";
-import React from "react";
 import dynamic from "next/dynamic";
+import React from "react";
+import { useShallow } from "zustand/react/shallow";
 
 const LazyCartSheet = dynamic(() => import("./cart-modal"), { ssr: false });
 
-function Modals() {
+export default function Modals() {
   const activeModalKeys = useModalStore(
     useShallow((s) =>
       Object.entries(s.modals)
@@ -37,8 +37,4 @@ const ModalFactory = React.memo(function ModalFactory({
     default:
       return null;
   }
-});
-
-export default dynamic(() => Promise.resolve(Modals), {
-  ssr: false,
 });

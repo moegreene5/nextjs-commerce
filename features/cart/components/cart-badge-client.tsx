@@ -12,10 +12,17 @@ export default function CartBadgeClient() {
   const totalQuantity = data.data?.totalQuantity ?? 0;
   const isCartPage = pathname === "/cart";
 
+  const handleIntent = () => {
+    import("@/components/modals/cart-modal");
+  };
+
   return (
     <button
       onClick={() => !isCartPage && openModal("cart", null)}
       disabled={isCartPage}
+      onMouseEnter={handleIntent}
+      onTouchStart={handleIntent}
+      onFocus={handleIntent}
       className="relative flex items-center justify-center"
     >
       <span className="sr-only">{isCartPage ? "Cart" : "Go to cart"}</span>
