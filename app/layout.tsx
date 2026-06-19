@@ -1,15 +1,11 @@
 import "./globals.css";
 
+import Modals from "@/components/modals/modal";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Geologica, Raleway } from "next/font/google";
 import { Toaster } from "sonner";
 import Providers from "./providers";
-import dynamic from "next/dynamic";
-
-const DynamicModals = dynamic(() => import("@/components/modals/modal"), {
-  ssr: false,
-});
 
 export const metadata: Metadata = {
   title: {
@@ -44,7 +40,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <Toaster position="top-center" />
           <div className="flex min-h-screen flex-col">
             {children}
-            <DynamicModals />
+            <Modals />
           </div>
         </Providers>
         <Analytics />

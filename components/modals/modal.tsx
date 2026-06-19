@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 
 const LazyCartSheet = dynamic(() => import("./cart-modal"), { ssr: false });
 
-export default function Modals() {
+function Modals() {
   const activeModalKeys = useModalStore(
     useShallow((s) =>
       Object.entries(s.modals)
@@ -37,4 +37,8 @@ const ModalFactory = React.memo(function ModalFactory({
     default:
       return null;
   }
+});
+
+export default dynamic(() => Promise.resolve(Modals), {
+  ssr: false,
 });
