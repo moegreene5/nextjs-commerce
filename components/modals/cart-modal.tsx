@@ -16,7 +16,7 @@ import {
 } from "../ui/sheet";
 
 export default function CartSheet() {
-  const modals = useModalStore((s) => s.modals);
+  const isCartOpen = useModalStore((s) => !!s.modals["cart"]);
   const closeModal = useModalStore((s) => s.closeModal);
   const data = useQuery(cartQueryOptions());
   const cart = data?.data;
@@ -25,7 +25,7 @@ export default function CartSheet() {
   const isFree = (cart?.subtotal ?? 0) >= FREE_SHIPPING_THRESHOLD;
 
   return (
-    <Sheet open={!!modals["cart"]} onOpenChange={() => closeModal("cart")}>
+    <Sheet open={isCartOpen} onOpenChange={() => closeModal("cart")}>
       <SheetContent
         onOpenAutoFocus={(e) => e.preventDefault()}
         className="w-full! max-w-152.5! border-none px-0 flex flex-col"

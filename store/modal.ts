@@ -9,10 +9,7 @@ export type Modal = keyof ModalEntityMap;
 type ModalStore = {
   modals: Partial<Record<Modal, boolean>>;
   selectedEntity: Partial<{ [k in Modal]: ModalEntityMap[k] | null }>;
-  openModal: <K extends Modal>(
-    modal: K,
-    entity: ModalEntityMap[K] | null,
-  ) => void;
+  openModal: <k extends Modal>(modal: k, entity: ModalEntityMap[k]) => void;
   closeModal: (modal: Modal) => void;
   closeAllModals: () => void;
 };
@@ -31,7 +28,7 @@ export const useModalStore = create<ModalStore>((set) => ({
       selectedEntity: { ...state.selectedEntity, [modal]: null },
     })),
   closeAllModals: () =>
-    set((state) => ({
+    set(() => ({
       modals: {},
       selectedEntity: {},
     })),
