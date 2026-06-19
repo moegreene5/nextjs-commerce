@@ -75,6 +75,11 @@ export const getCart = cache(async (): Promise<GetCartResult> => {
       0,
     );
 
+    const totalQuantity = items.reduce(
+      (acc, current) => acc + current.quantity,
+      0,
+    );
+
     return {
       success: true,
       cart: {

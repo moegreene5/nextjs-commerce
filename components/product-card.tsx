@@ -72,29 +72,29 @@ const ProductCard = ({
       className={cn("group/card relative h-full flex flex-col", className)}
     >
       <Link href={`/product/${slug}`} className="group/image block">
-        <div className="relative aspect-3/4 w-full overflow-hidden bg-neutral-50">
-          <Image
-            src={images[0]?.url}
-            alt={name}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className={cn(
-              "object-cover transition-opacity duration-700",
-              images[1]
-                ? "group-hover/image:opacity-0"
-                : "transition-transform duration-700 group-hover/image:scale-105",
-            )}
-          />
-
+        <div className="relative aspect-3/4 w-full overflow-hidden bg-neutral-50 isolate">
           {images[1] && (
             <Image
               src={images[1].url}
               alt={`${name} - alternate view`}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-cover opacity-0 group-hover/image:opacity-100 transition-opacity duration-700"
+              className="object-cover"
             />
           )}
+
+          <Image
+            src={images[0]?.url}
+            alt={name}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className={cn(
+              "object-cover absolute inset-0",
+              images[1]
+                ? "transition-opacity duration-500 ease-in-out group-hover/image:opacity-0"
+                : "transition-transform duration-700 ease-in-out group-hover/image:scale-105",
+            )}
+          />
 
           {isOutOfStock && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/60">
