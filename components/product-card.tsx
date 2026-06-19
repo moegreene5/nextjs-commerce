@@ -91,8 +91,8 @@ const ProductCard = ({
             className={cn(
               "object-cover absolute inset-0",
               images[1]
-                ? "transition-opacity duration-500 ease-in-out group-hover/image:opacity-0"
-                : "transition-transform duration-700 ease-in-out group-hover/image:scale-105",
+                ? "transition-opacity duration-800 ease-in-out group-hover/image:opacity-0"
+                : "transition-transform  duration-800 ease-in-out group-hover/image:scale-105",
             )}
           />
 
@@ -154,7 +154,7 @@ const ProductCard = ({
             disabled={isPending}
             className={cn(
               "mt-auto w-full border border-black py-2.5 text-[10px] uppercase tracking-[0.18em] hover:bg-black hover:text-white font-medium",
-              "transition-all duration-300 flex items-center justify-center gap-2 overflow-hidden relative",
+              "transition-colors duration-300 flex items-center justify-center gap-2 overflow-hidden relative",
               isPending && "opacity-60 cursor-default",
             )}
           >
