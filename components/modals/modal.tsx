@@ -1,11 +1,8 @@
 "use client";
 
 import { Modal, useModalStore } from "@/store/modal";
-import dynamic from "next/dynamic";
-import React from "react";
+import CartSheet from "./cart-modal";
 import { useShallow } from "zustand/react/shallow";
-
-const LazyCartSheet = dynamic(() => import("./cart-modal"), { ssr: false });
 
 export default function Modals() {
   const activeModalKeys = useModalStore(
@@ -25,16 +22,12 @@ export default function Modals() {
   );
 }
 
-const ModalFactory = React.memo(function ModalFactory({
-  type,
-}: {
-  type: Modal;
-}) {
+function ModalFactory({ type }: { type: Modal }) {
   switch (type) {
     case "cart":
-      return <LazyCartSheet />;
+      return <CartSheet />;
 
     default:
       return null;
   }
-});
+}

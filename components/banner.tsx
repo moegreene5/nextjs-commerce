@@ -42,7 +42,7 @@ const Banner = () => {
                 fill
                 alt="banner-image"
                 src="/images/com-6.webp"
-                className="object-cover object-center"
+                className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
                 priority={true}
               />
@@ -81,7 +81,7 @@ const Banner = () => {
                 fill
                 alt="banner-image"
                 src="/images/com-4.webp"
-                className="object-cover object-center"
+                className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>
