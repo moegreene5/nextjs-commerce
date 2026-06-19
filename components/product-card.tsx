@@ -61,7 +61,7 @@ const ProductCard = ({
       size: firstVariant.size,
       currentPrice: firstVariant.displayPrice,
       isOnSale: isOnSale,
-      originalPrice: firstVariant.displayPrice,
+      originalPrice: firstVariant.price,
     });
   };
 
@@ -72,14 +72,15 @@ const ProductCard = ({
       className={cn("group/card relative h-full flex flex-col", className)}
     >
       <Link href={`/product/${slug}`} className="group/image block">
-        <div className="relative aspect-3/4 w-full overflow-hidden bg-neutral-50 isolate">
+        <div className="relative aspect-3/4 w-full overflow-hidden bg-neutral-50">
           {images[1] && (
             <Image
               src={images[1].url}
               alt={`${name} - alternate view`}
               fill
+              fetchPriority="low"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-cover"
+              className="object-cover opacity-0 group-hover/image:opacity-100 transition-opacity duration-1000 ease-in-out"
             />
           )}
 
@@ -91,8 +92,8 @@ const ProductCard = ({
             className={cn(
               "object-cover absolute inset-0",
               images[1]
-                ? "transition-opacity duration-800 ease-in-out group-hover/image:opacity-0"
-                : "transition-transform  duration-800 ease-in-out group-hover/image:scale-105",
+                ? "transition-opacity duration-1000 ease-in-out group-hover/image:opacity-0"
+                : "transition-transform duration-1000 ease-in-out group-hover/image:scale-105",
             )}
           />
 
