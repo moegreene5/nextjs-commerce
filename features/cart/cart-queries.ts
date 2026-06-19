@@ -84,7 +84,7 @@ export const getCart = cache(async (): Promise<GetCartResult> => {
       success: true,
       cart: {
         cartId,
-        totalQuantity: cartData.totalQuantity ?? 0,
+        totalQuantity: totalQuantity,
         totalItems: cartData.totalItems ?? 0,
         subtotal,
         items,

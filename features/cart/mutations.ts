@@ -51,10 +51,14 @@ export function useAddToCart() {
         const exists = base.items.some(
           (i) => i.variantId === result.item.variantId,
         );
+
         const items = exists
-          ? base.items.map((i) =>
-              i.variantId === result.item.variantId ? result.item : i,
-            )
+          ? [
+              result.item,
+              ...base.items.filter(
+                (i) => i.variantId !== result.item.variantId,
+              ),
+            ]
           : [result.item, ...base.items];
 
         return {
