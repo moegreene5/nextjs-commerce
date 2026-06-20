@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ProductFilters } from "@/entities/product";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import { productFeedQueryOptions } from "../../queries";
 import { HitsSection } from "./hits-section";
 
@@ -12,10 +12,10 @@ interface Props {
 
 export function ProductFeed({ filters }: Props) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteQuery(productFeedQueryOptions(filters));
+    useSuspenseInfiniteQuery(productFeedQueryOptions(filters));
 
-  const allProducts = data?.pages.flatMap((page) => page.products) ?? [];
-  const filteredCount = data?.pages[0]?.filteredCount ?? 0;
+  const allProducts = data.pages.flatMap((page) => page.products) ?? [];
+  const filteredCount = data.pages[0]?.filteredCount ?? 0;
 
   return (
     <>
