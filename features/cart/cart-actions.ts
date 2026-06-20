@@ -345,9 +345,6 @@ export async function associateCartWithUser(
 
   const cookieStore = await cookies();
   const currentCartId = getCartId(cookieStore);
-  if (!currentCartId) {
-    return { status: "no_action" };
-  }
 
   try {
     const userRef = store.collection(collections.profile).doc(userId);

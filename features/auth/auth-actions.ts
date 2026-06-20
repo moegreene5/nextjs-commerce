@@ -98,8 +98,11 @@ export async function registerCustomer(
     redirect("/account/login?reason=registered", RedirectType.replace);
   }
 
-  await associateCartWithUser(signInResult.uid);
   await createUserSession(signInResult.idToken, await cookies());
+  const cartAssoc = await associateCartWithUser(signInResult.uid);
+  if (cartAssoc.status === "error") {
+    console.error("Cart merge warning:", cartAssoc.error);
+  }
 
   refresh();
   redirect("/", RedirectType.replace);

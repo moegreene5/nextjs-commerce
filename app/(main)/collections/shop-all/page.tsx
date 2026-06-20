@@ -5,12 +5,16 @@ import {
   FilterBarSkeleton,
 } from "@/features/product/components/filters/filter-bar";
 import { HitsSkeleton } from "@/features/product/components/filters/hits-section";
-import { getProducts } from "@/features/product/product-queries";
+import { productFeedQueryOptions } from "@/features/product/queries";
 import {
   buildFilters,
-  PAGE_SIZE,
   parseSearchParams,
 } from "@/features/product/search-params";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
 import { Metadata } from "next";
 import { SearchParams } from "next/dist/server/request/search-params";
 import Image from "next/image";
@@ -68,24 +72,17 @@ interface Props {
 
 async function AllProducts({ searchParams }: Props) {
   const sParams = await searchParams;
-
   const { brand, category, sort, featured, bestseller } =
     parseSearchParams(sParams);
-
   const filters = buildFilters({ brand, category, sort, featured, bestseller });
 
-  const { products, hasMore, lastDocId, filteredCount } = await getProducts({
-    ...filters,
-    limit: PAGE_SIZE,
-  });
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchInfiniteQuery(productFeedQueryOptions(filters));
 
   return (
-    <ProductFeed
-      initialProducts={products}
-      initialCursor={lastDocId}
-      hasMore={hasMore}
-      filteredCount={filteredCount}
-      filters={filters}
-    />
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <ProductFeed filters={filters} />
+    </HydrationBoundary>
   );
 }

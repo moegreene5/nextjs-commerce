@@ -1,6 +1,7 @@
 "use client";
 
 import { openModal } from "@/store/modal";
+import { cn } from "@/utils/cn";
 import { useQuery } from "@tanstack/react-query";
 import { ShoppingCart } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -21,7 +22,12 @@ export default function CartBadgeClient() {
       <span className="sr-only">{isCartPage ? "Cart" : "Go to cart"}</span>
       <ShoppingCart aria-hidden className="size-5 text-primary" />
       {totalQuantity > 0 && (
-        <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-stone-800 text-[10px] font-medium text-white">
+        <span
+          className={cn(
+            "absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-stone-800 text-[10px] font-medium text-white",
+            totalQuantity >= 99 && "text-[8.5px]",
+          )}
+        >
           {totalQuantity > 99 ? "99+" : totalQuantity}
         </span>
       )}
