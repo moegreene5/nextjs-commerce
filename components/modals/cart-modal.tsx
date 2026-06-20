@@ -16,6 +16,8 @@ import {
 } from "../ui/sheet";
 
 export default function CartSheet() {
+  console.log(Intl.supportedValuesOf("currency"));
+
   const isCartOpen = useModalStore((s) => !!s.modals["cart"]);
   const data = useQuery(cartQueryOptions());
   const cart = data?.data;
