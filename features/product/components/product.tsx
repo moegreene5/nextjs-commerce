@@ -10,17 +10,7 @@ import AddToCartForm from "./add-to-cart-form";
 import { ProductImages } from "./product-images";
 import ShareLinks from "./share-links";
 
-type Props = {
-  params: Promise<{ slug: string }>;
-};
-
-export default async function Product({ params }: Props) {
-  const { slug } = await params;
-
-  return <CachedProduct slug={slug} />;
-}
-
-export async function CachedProduct({ slug }: { slug: string }) {
+export async function Product({ slug }: { slug: string }) {
   "use cache";
   cacheTag(CACHE_TAGS.product(slug));
 

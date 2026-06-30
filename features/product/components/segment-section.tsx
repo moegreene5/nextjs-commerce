@@ -70,7 +70,21 @@ export default function SegmentSection({
               className="basis-[49%] sm:basis-[40%] lg:basis-[27%] p-0"
               key={product.id}
             >
-              <ProductCard {...product} />
+              <ProductCard
+                key={product.id}
+                id={product.id}
+                slug={product.slug}
+                name={product.name}
+                brand={product.brand}
+                isOnSale={product.isOnSale}
+                isOutOfStock={product.isOutOfStock}
+                lowestPrice={product.lowestPrice}
+                lowestOriginalPrice={product.lowestOriginalPrice}
+                hasMultipleVariants={product.hasMultipleVariants}
+                images={product.images}
+                variants={product.variants}
+                sale={product.sale}
+              />
             </CarouselItem>
           ))}
         </CarouselContent>

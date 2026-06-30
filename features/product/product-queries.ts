@@ -4,7 +4,6 @@ import {
   ProductCard,
   ProductDocument,
   ProductExtrasData,
-  ProductFilters,
 } from "@/entities/product";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { collections, store } from "@/lib/firebase/admin";
@@ -13,11 +12,10 @@ import {
   normalizeProductDoc,
   PRODUCT_CARD_FIELDS,
 } from "@/lib/product";
-import { DocumentReference, FieldPath } from "firebase-admin/firestore";
+import { FieldPath } from "firebase-admin/firestore";
 import { cacheLife, cacheTag } from "next/cache";
 import { notFound } from "next/navigation";
 import { cache } from "react";
-import { PAGE_SIZE } from "./search-params";
 
 export const getProduct = cache(async (slug: string) => {
   if (!slug || typeof slug !== "string") notFound();

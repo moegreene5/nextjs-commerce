@@ -6,15 +6,17 @@ import { getProducts } from "./product-actions";
 export const productFeedQueryOptions = (filters: ProductFilters) =>
   infiniteQueryOptions({
     queryKey: ["products-feed", filters] as const,
-
-    queryFn: async ({ pageParam }) => {
-      return await getProducts({
+    queryFn: async ({ pageParam }) =>
+      await getProducts({
         ...filters,
         limit: PAGE_SIZE,
         startAfterDocId: pageParam || undefined,
-      });
-    },
-
+      }),
+    select: (data) => ({
+      pages: data.pages.flatMap((page) => page.products),
+      pageParams: data.pageParams,
+      filteredCount: data.pages[0]?.filteredCount ?? 0,
+    }),
     initialPageParam: undefined as string | null | undefined,
 
     getNextPageParam: (lastPage) => {

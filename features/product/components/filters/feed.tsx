@@ -14,8 +14,8 @@ export function ProductFeed({ filters }: Props) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useSuspenseInfiniteQuery(productFeedQueryOptions(filters));
 
-  const allProducts = data.pages.flatMap((page) => page.products) ?? [];
-  const filteredCount = data.pages[0]?.filteredCount ?? 0;
+  const allProducts = data.pages;
+  const filteredCount = data.filteredCount;
 
   return (
     <>

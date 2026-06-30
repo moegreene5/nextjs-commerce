@@ -10,17 +10,7 @@ import { CACHE_TAGS } from "@/lib/cache-tags";
 import { cacheTag } from "next/cache";
 import { getRelatedProducts } from "../product-queries";
 
-type Props = {
-  params: Promise<{ slug: string }>;
-};
-
-export default async function RelatedProducts({ params }: Props) {
-  const { slug } = await params;
-
-  return <CachedRelatedProducts slug={slug} />;
-}
-
-async function CachedRelatedProducts({ slug }: { slug: string }) {
+export default async function RelatedProducts({ slug }: { slug: string }) {
   "use cache";
   cacheTag(CACHE_TAGS.relatedProducts);
 
@@ -55,7 +45,22 @@ async function CachedRelatedProducts({ slug }: { slug: string }) {
               className="basis-[50%] x410:basis-[45%] sm:basis-[40%] lg:basis-[25%] p-0 pr-4"
               key={product.id}
             >
-              <ProductCard showAddToCart={false} {...product} />
+              <ProductCard
+                showAddToCart={false}
+                key={product.id}
+                id={product.id}
+                slug={product.slug}
+                name={product.name}
+                brand={product.brand}
+                isOnSale={product.isOnSale}
+                isOutOfStock={product.isOutOfStock}
+                lowestPrice={product.lowestPrice}
+                lowestOriginalPrice={product.lowestOriginalPrice}
+                hasMultipleVariants={product.hasMultipleVariants}
+                images={product.images}
+                variants={product.variants}
+                sale={product.sale}
+              />
             </CarouselItem>
           ))}
         </CarouselContent>

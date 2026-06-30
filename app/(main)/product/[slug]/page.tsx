@@ -1,12 +1,8 @@
 import { Container } from "@/components/ui/container";
-import Product, {
-  ProductSkeleton,
-} from "@/features/product/components/product";
-import RelatedProducts, {
-  RelatedProductsSkeleton,
-} from "@/features/product/components/related-products";
+import { Product } from "@/features/product/components/product";
+
+import RelatedProducts from "@/features/product/components/related-products";
 import { collections, store } from "@/lib/firebase/admin";
-import { Suspense } from "react";
 
 export { generateMetadata } from "./metadata";
 
@@ -19,16 +15,14 @@ export async function generateStaticParams() {
 }
 
 export default async function Page({ params }: PageProps<"/product/[slug]">) {
+  const { slug } = await params;
+
   return (
     <main>
       <Container className="py-4">
-        <Suspense fallback={<ProductSkeleton />}>
-          <Product params={params} />
-        </Suspense>
+        <Product slug={slug} />
       </Container>
-      <Suspense fallback={<RelatedProductsSkeleton />}>
-        <RelatedProducts params={params} />
-      </Suspense>
+      <RelatedProducts slug={slug} />
     </main>
   );
 }
