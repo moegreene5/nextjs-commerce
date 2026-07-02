@@ -6,9 +6,14 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { CACHE_TAGS } from "@/lib/cache-tags";
+import { cacheTag } from "next/cache";
 import { getRelatedProducts } from "../product-queries";
 
 export default async function RelatedProducts({ slug }: { slug: string }) {
+  "use cache";
+  cacheTag(CACHE_TAGS.relatedProducts);
+
   const relatedProducts = await getRelatedProducts(slug);
 
   if (!relatedProducts.length) return null;

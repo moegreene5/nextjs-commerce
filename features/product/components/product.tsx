@@ -1,6 +1,8 @@
 import ExpandableContent from "@/components/expandable-content";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CACHE_TAGS } from "@/lib/cache-tags";
+import { cacheTag } from "next/cache";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { getProduct } from "../product-queries";
@@ -9,6 +11,9 @@ import { ProductImages } from "./product-images";
 import ShareLinks from "./share-links";
 
 export async function Product({ slug }: { slug: string }) {
+  "use cache";
+  cacheTag(CACHE_TAGS.product(slug));
+
   const product = await getProduct(slug);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL!;
@@ -24,7 +29,7 @@ export async function Product({ slug }: { slug: string }) {
           <p className="font-medium text-base md:text-lg text-gray-700 mt-1">
             {product.name}
           </p>
-          <span className="inline-block mt-2 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+          <span className="inline-block mt-2 text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
             {product.category.name}
           </span>
         </div>
