@@ -116,7 +116,7 @@ const ProductCard = ({
       </Link>
 
       <Link href={`/product/${slug}`} className="my-3 flex flex-col gap-1">
-        <span className="text-[10px] uppercase tracking-[0.15em] text-neutral-400">
+        <span className="text-[10px] uppercase tracking-[0.15em] text-neutral-600">
           {brand}
         </span>
         <p className="text-[13px] leading-snug text-black transition-opacity hover:opacity-60">

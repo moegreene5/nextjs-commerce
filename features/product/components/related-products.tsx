@@ -6,14 +6,9 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { CACHE_TAGS } from "@/lib/cache-tags";
-import { cacheTag } from "next/cache";
 import { getRelatedProducts } from "../product-queries";
 
 export default async function RelatedProducts({ slug }: { slug: string }) {
-  "use cache";
-  cacheTag(CACHE_TAGS.relatedProducts);
-
   const relatedProducts = await getRelatedProducts(slug);
 
   if (!relatedProducts.length) return null;
@@ -21,9 +16,9 @@ export default async function RelatedProducts({ slug }: { slug: string }) {
   return (
     <div className="my-8 md:my-16 mb-16">
       <div className="px-page">
-        <h4 className="text-2xl lg:text-3xl font-bold mb-4 md:mb-6">
+        <h2 className="text-2xl lg:text-3xl font-bold mb-4 md:mb-6">
           You might also like
-        </h4>
+        </h2>
       </div>
       <Carousel
         opts={{

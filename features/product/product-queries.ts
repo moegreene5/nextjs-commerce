@@ -18,6 +18,9 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 
 export const getProduct = cache(async (slug: string) => {
+  "use cache";
+  cacheTag(CACHE_TAGS.product(slug));
+
   if (!slug || typeof slug !== "string") notFound();
 
   const docRef = store.collection(collections.products).doc(slug);
@@ -69,6 +72,9 @@ export const getNewArrivals = cache(async (limit = 8) => {
 });
 
 export const getRelatedProducts = cache(async (slug: string) => {
+  "use cache";
+  cacheTag(CACHE_TAGS.relatedProducts);
+
   if (!slug) return [];
 
   const productRef = store.collection(collections.products).doc(slug);
