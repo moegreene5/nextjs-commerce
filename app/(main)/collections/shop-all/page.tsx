@@ -1,6 +1,9 @@
 import { Container } from "@/components/ui/container";
 import { ProductFeed } from "@/features/product/components/filters/feed";
-import { FilterBar } from "@/features/product/components/filters/filter-bar";
+import {
+  FilterBar,
+  FilterBarSkeleton,
+} from "@/features/product/components/filters/filter-bar";
 import { HitsSkeleton } from "@/features/product/components/filters/hits-section";
 import { productFeedQueryOptions } from "@/features/product/queries";
 import {
@@ -51,7 +54,9 @@ export default function Page({
 
       <Container className="py-6 md:py-8">
         <div className="flex flex-col gap-8">
-          <FilterBar />
+          <Suspense fallback={<FilterBarSkeleton />}>
+            <FilterBar />
+          </Suspense>
           <Suspense fallback={<HitsSkeleton />}>
             <AllProducts searchParams={searchParams} />
           </Suspense>
@@ -73,7 +78,9 @@ async function AllProducts({ searchParams }: Props) {
 
   const queryClient = new QueryClient();
 
-  await queryClient.prefetchInfiniteQuery(productFeedQueryOptions(filters));
+  try {
+    await queryClient.ensureInfiniteQueryData(productFeedQueryOptions(filters));
+  } catch (error) {}
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
