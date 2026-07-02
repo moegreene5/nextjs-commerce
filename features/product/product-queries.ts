@@ -15,12 +15,8 @@ import {
 import { FieldPath } from "firebase-admin/firestore";
 import { cacheLife, cacheTag } from "next/cache";
 import { notFound } from "next/navigation";
-import { cache } from "react";
 
-export const getProduct = cache(async (slug: string) => {
-  "use cache";
-  cacheTag(CACHE_TAGS.product(slug));
-
+export const getProduct = async (slug: string) => {
   if (!slug || typeof slug !== "string") notFound();
 
   const docRef = store.collection(collections.products).doc(slug);
@@ -31,9 +27,9 @@ export const getProduct = cache(async (slug: string) => {
   return normalizeProductDoc(
     docSnap as FirebaseFirestore.QueryDocumentSnapshot,
   );
-});
+};
 
-export const getFeaturedProducts = cache(async (limit = 5) => {
+export const getFeaturedProducts = async (limit = 5) => {
   const snapshot = await store
     .collection(collections.products)
     .where("isFeatured", "==", true)
@@ -43,9 +39,9 @@ export const getFeaturedProducts = cache(async (limit = 5) => {
 
   if (snapshot.empty) return [];
   return snapshot.docs.map(normalizeProductCard);
-});
+};
 
-export const getBestSellers = cache(async (limit = 5) => {
+export const getBestSellers = async (limit = 5) => {
   const snapshot = await store
     .collection(collections.products)
     .where("isBestSeller", "==", true)
@@ -56,9 +52,9 @@ export const getBestSellers = cache(async (limit = 5) => {
   if (snapshot.empty) return [];
 
   return snapshot.docs.map(normalizeProductCard);
-});
+};
 
-export const getNewArrivals = cache(async (limit = 8) => {
+export const getNewArrivals = async (limit = 8) => {
   const snapshot = await store
     .collection(collections.products)
     .select(...PRODUCT_CARD_FIELDS)
@@ -69,12 +65,9 @@ export const getNewArrivals = cache(async (limit = 8) => {
   if (snapshot.empty) return [];
 
   return snapshot.docs.map(normalizeProductCard);
-});
+};
 
-export const getRelatedProducts = cache(async (slug: string) => {
-  "use cache";
-  cacheTag(CACHE_TAGS.relatedProducts);
-
+export const getRelatedProducts = async (slug: string) => {
   if (!slug) return [];
 
   const productRef = store.collection(collections.products).doc(slug);
@@ -122,9 +115,9 @@ export const getRelatedProducts = cache(async (slug: string) => {
   }
 
   return results;
-});
+};
 
-export const getProductExtras = cache(async (): Promise<ProductExtrasData> => {
+export const getProductExtras = async (): Promise<ProductExtrasData> => {
   "use cache";
   cacheLife("weeks");
   cacheTag(CACHE_TAGS.productExtras);
@@ -147,4 +140,4 @@ export const getProductExtras = cache(async (): Promise<ProductExtrasData> => {
       logo: doc.data().logo ?? null,
     })),
   };
-});
+};

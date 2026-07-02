@@ -17,8 +17,9 @@ export const productFeedQueryOptions = (filters: ProductFilters) =>
       pageParams: data.pageParams,
       filteredCount: data.pages[0]?.filteredCount ?? 0,
     }),
-    initialPageParam: undefined as string | null | undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.hasMore ? lastPage.lastDocId : undefined;
     },
+    initialPageParam: undefined as string | null | undefined,
+    refetchOnWindowFocus: false,
   });
