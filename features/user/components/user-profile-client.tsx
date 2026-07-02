@@ -28,14 +28,16 @@ export function UserProfileClient({ user }: UserProps) {
             className="size-6 cursor-pointer"
             role="button"
             aria-label={`Account menu for ${user.displayName}`}
-            aria-haspopup="true"
           >
             <AvatarFallback className="bg-primary text-white text-sm font-semibold capitalize">
               {user.displayName?.[0]}
             </AvatarFallback>
           </Avatar>
         ) : (
-          <div className="flex items-center cursor-pointer">
+          <button
+            type="button"
+            className="flex items-center cursor-pointer focus:outline-none focus-visible:underline text-left"
+          >
             <span className="hidden lg:inline text-xs font-semibold hover:underline">
               Account
             </span>
@@ -44,7 +46,7 @@ export function UserProfileClient({ user }: UserProps) {
                 <UserRound className="size-5.5 md:size-6" aria-hidden="true" />
               </AvatarFallback>
             </Avatar>
-          </div>
+          </button>
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent

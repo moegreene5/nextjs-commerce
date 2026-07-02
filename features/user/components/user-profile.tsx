@@ -22,9 +22,14 @@ export default async function UserProfile() {
 
 export function UserProfileSkeleton() {
   return (
-    <div role="status" aria-label="Loading user profile" aria-busy="true">
-      <Skeleton className="hidden lg:block bg-gray-200 h-4 w-14 rounded" />
-      <Skeleton className="bg-gray-200 h-6 w-6 rounded-full lg:hidden" />
+    <div
+      role="status"
+      aria-label="Loading user profile"
+      aria-busy="true"
+      className="flex items-center"
+    >
+      <Skeleton className="hidden lg:inline-block bg-gray-200 h-4 w-14 rounded" />
+      <Skeleton className="size-6 rounded-full lg:hidden bg-gray-200" />
     </div>
   );
 }
