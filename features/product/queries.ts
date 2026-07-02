@@ -1,6 +1,6 @@
-import { infiniteQueryOptions } from "@tanstack/react-query";
 import { ProductFilters } from "@/entities/product";
 import { PAGE_SIZE } from "@/features/product/search-params";
+import { infiniteQueryOptions } from "@tanstack/react-query";
 import { getProducts } from "./product-actions";
 
 export const productFeedQueryOptions = (filters: ProductFilters) =>
@@ -18,7 +18,6 @@ export const productFeedQueryOptions = (filters: ProductFilters) =>
       filteredCount: data.pages[0]?.filteredCount ?? 0,
     }),
     initialPageParam: undefined as string | null | undefined,
-
     getNextPageParam: (lastPage) => {
       return lastPage.hasMore ? lastPage.lastDocId : undefined;
     },

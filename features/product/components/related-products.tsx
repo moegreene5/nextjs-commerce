@@ -47,7 +47,6 @@ export default async function RelatedProducts({ slug }: { slug: string }) {
             >
               <ProductCard
                 showAddToCart={false}
-                key={product.id}
                 id={product.id}
                 slug={product.slug}
                 name={product.name}

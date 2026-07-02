@@ -323,8 +323,10 @@ async function getProductsUncached(
     }
   }
 
+  const isFirstPage = !startAfterDocId;
+
   const [filteredCountSnap, paginatedSnap] = await Promise.all([
-    baseQuery.count().get(),
+    isFirstPage ? baseQuery.count().get() : Promise.resolve(null),
     (async () => {
       let q = baseQuery.orderBy(sortBy, sortDir);
       if (startAfterDocId) {
@@ -338,7 +340,7 @@ async function getProductsUncached(
     })(),
   ]);
 
-  const filteredCount = filteredCountSnap.data().count;
+  const filteredCount = filteredCountSnap ? filteredCountSnap.data().count : -1;
 
   if (paginatedSnap.empty) {
     return { products: [], lastDocId: null, hasMore: false, filteredCount };

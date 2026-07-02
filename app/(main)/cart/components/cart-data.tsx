@@ -23,7 +23,7 @@ function CartData() {
           <p className="text-stone-700 font-semibold font-geologica">
             Your cart is empty
           </p>
-          <p className="text-stone-400 text-sm">
+          <p className="text-stone-600 text-sm">
             Add some items to get started.
           </p>
           <Button size="sm" asChild className="mt-1">

@@ -19,13 +19,12 @@ const ExpandableContent = ({
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!contentRef?.current) return;
+    const currentElement = contentRef.current;
+    if (!currentElement) return;
 
     const checkClamp = () => {
-      if (!contentRef.current) return;
-      setIsClamped(
-        contentRef.current.scrollHeight > contentRef.current.clientHeight,
-      );
+      if (!currentElement) return;
+      setIsClamped(currentElement.scrollHeight > currentElement.clientHeight);
     };
 
     checkClamp();
