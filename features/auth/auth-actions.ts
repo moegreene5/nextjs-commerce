@@ -18,15 +18,15 @@ import {
   ChangePasswordInput,
   changePasswordSchema,
 } from "@/schema/changePassword.schema";
-import { loginSchema } from "@/schema/login.schema";
+import { LoginFormData, loginSchema } from "@/schema/login.schema";
 import { RegisterData, userRegisterSchema } from "@/schema/register.schema";
 import { ForgotPassword, forgotPasswordSchema } from "@/schema/reset.schema";
 import { UserRecord } from "firebase-admin/auth";
 import { Route } from "next";
-import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect, RedirectType } from "next/navigation";
 import { associateCartWithUser } from "../cart/cart-actions";
+import { refresh } from "next/cache";
 
 export async function registerCustomer(
   data: RegisterData,
@@ -109,14 +109,9 @@ export async function registerCustomer(
 }
 
 export async function logIn(
-  formData: FormData,
+  data: LoginFormData,
   redirectUrl?: Route,
 ): Promise<ActionResult> {
-  const data = {
-    email: formData.get("email"),
-    password: formData.get("password"),
-  };
-
   const loginData = loginSchema.safeParse(data);
 
   if (!loginData.success) {
