@@ -60,13 +60,14 @@ export const getCart = cache(async (): Promise<GetCartResult> => {
         size: d.size ?? variant?.size ?? "",
         slug: product.slug,
         name: product.name,
-        image: product.images[0]?.url,
+        image: product.images[0]?.url ?? "",
         quantity: d.quantity,
         priceAtAdded: d.priceAtAdded,
         currentPrice,
         priceChange: computePriceChange(d.priceAtAdded, currentPrice),
-        addedAt: d.addedAt?.toDate() ?? new Date(),
-        updatedAt: d.updatedAt?.toDate() ?? new Date(),
+        addedAt: d.addedAt?.toDate().toISOString() ?? new Date().toISOString(),
+        updatedAt:
+          d.updatedAt?.toDate().toISOString() ?? new Date().toISOString(),
       };
     });
 
@@ -88,9 +89,15 @@ export const getCart = cache(async (): Promise<GetCartResult> => {
         totalItems: cartData.totalItems ?? 0,
         subtotal,
         items,
-        lastActiveAt: cartData.lastActiveAt?.toDate() ?? new Date(),
-        updatedAt: cartData.updatedAt?.toDate() ?? new Date(),
-        createdAt: cartData.createdAt?.toDate() ?? new Date(),
+        lastActiveAt:
+          cartData.lastActiveAt?.toDate().toISOString() ??
+          new Date().toISOString(),
+        updatedAt:
+          cartData.updatedAt?.toDate().toISOString() ??
+          new Date().toISOString(),
+        createdAt:
+          cartData.createdAt?.toDate().toISOString() ??
+          new Date().toISOString(),
       },
     };
   } catch (error) {

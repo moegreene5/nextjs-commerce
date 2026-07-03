@@ -23,7 +23,6 @@ export function LoginFormPage() {
     },
     validators: {
       onChange: loginSchema,
-      onChangeAsyncDebounceMs: 500,
       onSubmitAsync: async ({ value }) => {
         try {
           const res = await logIn(value, (redirectUrl as Route) ?? undefined);

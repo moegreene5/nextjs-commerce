@@ -1,4 +1,4 @@
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 export const MAX_CART_ITEMS = 50;
 
@@ -18,8 +18,17 @@ export type CartItemDocument = {
   size: string;
   priceAtAdded: number;
   quantity: number;
-  addedAt: FirebaseFirestore.Timestamp;
-  updatedAt: FirebaseFirestore.Timestamp;
+  addedAt: Timestamp;
+  updatedAt: Timestamp;
+};
+
+export type CartDocumentUpdate = {
+  totalQuantity: FieldValue;
+  lastActiveAt: Timestamp;
+  updatedAt: Timestamp;
+  totalItems?: FieldValue;
+  cartId?: string;
+  createdAt?: Timestamp;
 };
 
 export type CartItem = {
@@ -33,8 +42,8 @@ export type CartItem = {
   priceAtAdded: number;
   currentPrice: number;
   priceChange: PriceChange;
-  addedAt: Date;
-  updatedAt: Date;
+  addedAt: string;
+  updatedAt: string;
 };
 
 export type Cart = {
@@ -43,18 +52,9 @@ export type Cart = {
   totalQuantity: number;
   subtotal: number;
   items: CartItem[];
-  lastActiveAt: Date;
-  updatedAt: Date;
-  createdAt: Date;
-};
-
-export type CartDocumentUpdate = {
-  totalQuantity: FieldValue;
-  lastActiveAt: Date;
-  updatedAt: Date;
-  totalItems?: FieldValue;
-  cartId?: string;
-  createdAt?: Date;
+  lastActiveAt: string;
+  updatedAt: string;
+  createdAt: string;
 };
 
 export type GetCartResult =

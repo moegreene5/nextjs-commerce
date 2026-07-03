@@ -82,7 +82,10 @@ const baseProductSchema = z.object({
 export const createProductSchema = baseProductSchema;
 
 export const createProductActionSchema = baseProductSchema
-  .omit({ images: true, primaryIndex: true })
+  .refine((data) => data.primaryIndex < data.images.length, {
+    message: "Primary index out of range",
+    path: ["primaryIndex"],
+  })
   .transform((data) => ({
     ...data,
     variants: data.variants.map((v) => ({

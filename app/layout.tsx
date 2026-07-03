@@ -4,9 +4,9 @@ import Modals from "@/components/modals/modal";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Geologica, Raleway } from "next/font/google";
+import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "sonner";
 import Providers from "./providers";
-import NextTopLoader from "nextjs-toploader";
 
 export const metadata: Metadata = {
   title: {

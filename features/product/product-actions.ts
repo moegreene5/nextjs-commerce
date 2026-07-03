@@ -2,12 +2,10 @@
 
 import { ProductDocument, ProductFilters } from "@/entities/product";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { AppError } from "@/lib/errors";
 import { collections, store } from "@/lib/firebase/admin";
 import { getUserFromSession } from "@/lib/session";
-import {
-  createProductActionSchema,
-  imagesSchema,
-} from "@/schema/product.schema";
+import { createProductActionSchema } from "@/schema/product.schema";
 import { deleteImage, uploadImage } from "@/utils/cloudinary";
 import { randomBytes } from "crypto";
 import { Timestamp } from "firebase-admin/firestore";
@@ -26,16 +24,6 @@ function randomString(length = 6) {
     .toLowerCase()
     .slice(0, length);
 }
-
-// async function uploadImage(img: File): Promise<string> {
-//   const buffer = Buffer.from(await img.arrayBuffer());
-//   const fileName = `${collections.product}/${new Date().toISOString()}-${
-//     img.name
-//   }`;
-//   const fileRef = storage.bucket().file(fileName);
-//   await fileRef.save(buffer);
-//   return getDownloadURL(fileRef);
-// }
 
 function parseForm(form: FormData) {
   const variants: unknown[] = [];
@@ -62,6 +50,7 @@ function parseForm(form: FormData) {
     isBestSeller: form.get("isBestSeller") === "true",
     primaryIndex: Number(form.get("primaryIndex") ?? 0),
     slug: opt("slug"),
+    images: form.getAll("image"),
     variants,
     sale: saleType
       ? {
@@ -93,7 +82,6 @@ export async function createProduct(
 
   try {
     const parsed = createProductActionSchema.safeParse(parseForm(form));
-    const primaryIndex = Number(form.get("primaryIndex") ?? 0);
 
     if (!parsed.success) {
       return {
@@ -105,12 +93,8 @@ export async function createProduct(
     }
 
     const data = parsed.data;
-
-    const files = form.getAll("image") as File[];
-    const imagesResult = imagesSchema.safeParse(files);
-    if (!imagesResult.success) {
-      return { success: false, error: imagesResult.error.issues[0].message };
-    }
+    const primaryIndex = data.primaryIndex;
+    const files = data.images;
 
     const categoryRef = store.doc(
       `${collections.categories}/${data.categoryId}`,
@@ -132,22 +116,44 @@ export async function createProduct(
     const slug = `${baseSlug}-${randomString(6)}`;
 
     const productRef = store.collection(collections.products).doc(slug);
-    const existingProduct = await productRef.get();
-    if (existingProduct.exists) {
-      return { success: false, error: "Product already exists" };
+
+    let sale;
+    if (data.sale) {
+      const startMs = Date.parse(data.sale.startDate);
+      const endMs = Date.parse(data.sale.endDate);
+      if (Number.isNaN(startMs) || Number.isNaN(endMs)) {
+        return { success: false, error: "Invalid sale date" };
+      }
+      sale = {
+        type: data.sale.type,
+        value: Number(data.sale.value),
+        startDate: Timestamp.fromMillis(startMs),
+        endDate: Timestamp.fromMillis(endMs),
+        ...(data.sale.label && { label: data.sale.label }),
+      };
     }
 
-    const sale = data.sale
-      ? {
-          type: data.sale.type,
-          value: Number(data.sale.value),
-          startDate: Timestamp.fromMillis(Date.parse(data.sale.startDate)),
-          endDate: Timestamp.fromMillis(Date.parse(data.sale.endDate)),
-          ...(data.sale.label && { label: data.sale.label }),
-        }
-      : undefined;
+    const results = await Promise.allSettled(files.map(uploadImage));
 
-    uploadedUrls = await Promise.all(files.map(uploadImage));
+    const failures = results.filter(
+      (r): r is PromiseRejectedResult => r.status === "rejected",
+    );
+
+    uploadedUrls = results
+      .filter(
+        (r): r is PromiseFulfilledResult<string> => r.status === "fulfilled",
+      )
+      .map((r) => r.value);
+
+    if (failures.length > 0) {
+      failures.forEach((f, i) =>
+        console.error(`[createProduct] image upload ${i} failed:`, f.reason),
+      );
+      throw new AppError(
+        `${failures.length} of ${files.length} image(s) failed to upload`,
+        "UPLOAD_FAILED",
+      );
+    }
 
     const unsorted = uploadedUrls.map((url, i) => ({
       url,
@@ -182,7 +188,14 @@ export async function createProduct(
       updatedAt: Timestamp.now(),
     };
 
-    await productRef.set(doc);
+    try {
+      await productRef.create(doc);
+    } catch (err: any) {
+      if (err.code === 6) {
+        throw new AppError("Product already exists", "SLUG_CONFLICT");
+      }
+      throw err;
+    }
 
     if (data.isFeatured) updateTag(CACHE_TAGS.featuredProducts);
     if (data.isBestSeller) updateTag(CACHE_TAGS.bestSellers);
@@ -197,7 +210,12 @@ export async function createProduct(
       await Promise.allSettled(uploadedUrls.map(deleteImage));
     }
 
-    return { success: false, error: "Something went wrong. Please try again." };
+    const error =
+      err instanceof AppError
+        ? err.message
+        : "Something went wrong. Please try again.";
+
+    return { success: false, error };
   }
 }
 

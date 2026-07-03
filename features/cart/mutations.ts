@@ -102,7 +102,12 @@ export function useRemoveFromCart() {
       queryClient.setQueryData<Cart>(queryKey, (old) => {
         if (!old) return old;
         const items = old.items.filter((i) => i.variantId !== vars.variantId);
-        return { ...old, items, ...recalcTotals(items), updatedAt: new Date() };
+        return {
+          ...old,
+          items,
+          ...recalcTotals(items),
+          updatedAt: new Date().toISOString(),
+        };
       });
     },
 
@@ -127,7 +132,7 @@ export function useUpdateQuantity() {
       }
 
       const delta = vars.type === "increase" ? 1 : -1;
-      const now = new Date();
+      const nowString = new Date().toISOString();
 
       queryClient.setQueryData<Cart>(queryKey, (old) => {
         if (!old) return old;
@@ -140,11 +145,16 @@ export function useUpdateQuantity() {
             ? old.items.filter((i) => i.variantId !== vars.variantId)
             : old.items.map((i) =>
                 i.variantId === vars.variantId
-                  ? { ...i, quantity: newQuantity, updatedAt: now }
+                  ? { ...i, quantity: newQuantity, updatedAt: nowString }
                   : i,
               );
 
-        return { ...old, items, ...recalcTotals(items), updatedAt: now };
+        return {
+          ...old,
+          items,
+          ...recalcTotals(items),
+          updatedAt: nowString,
+        };
       });
     },
 

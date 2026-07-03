@@ -41,7 +41,6 @@ export default function CreateProductForm({ extras }: Props) {
     } as CreateProductInput,
     validators: {
       onChange: createProductSchema,
-      onChangeAsyncDebounceMs: 500,
       onSubmitAsync: async ({ value }) => {
         const formData = new FormData();
 
@@ -123,13 +122,13 @@ export default function CreateProductForm({ extras }: Props) {
   };
 
   const addVariant = () => {
-    const current = form.getFieldValue("variants") as typeof EMPTY_VARIANT[];
+    const current = form.getFieldValue("variants") as (typeof EMPTY_VARIANT)[];
     if (current.length >= 5) return;
     form.setFieldValue("variants", [...current, { ...EMPTY_VARIANT }]);
   };
 
   const removeVariant = (index: number) => {
-    const current = form.getFieldValue("variants") as typeof EMPTY_VARIANT[];
+    const current = form.getFieldValue("variants") as (typeof EMPTY_VARIANT)[];
     if (current.length === 1) return;
     form.setFieldValue(
       "variants",
@@ -142,7 +141,7 @@ export default function CreateProductForm({ extras }: Props) {
     field: keyof typeof EMPTY_VARIANT,
     value: string,
   ) => {
-    const current = form.getFieldValue("variants") as typeof EMPTY_VARIANT[];
+    const current = form.getFieldValue("variants") as (typeof EMPTY_VARIANT)[];
     const updated = current.map((v, i) =>
       i === index ? { ...v, [field]: value } : v,
     );
@@ -210,7 +209,7 @@ export default function CreateProductForm({ extras }: Props) {
         <form.AppField name="variants">
           {(field) => {
             const variants =
-              (field.state.value as typeof EMPTY_VARIANT[]) ?? [];
+              (field.state.value as (typeof EMPTY_VARIANT)[]) ?? [];
             const error = field.state.meta.errors[0];
 
             return (

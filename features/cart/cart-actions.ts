@@ -20,7 +20,11 @@ import {
   RemoveFromCartInput,
   removeFromCartSchema,
 } from "@/schema/cart.schema";
-import { DocumentReference, FieldValue } from "firebase-admin/firestore";
+import {
+  DocumentReference,
+  FieldValue,
+  Timestamp,
+} from "firebase-admin/firestore";
 import { cookies } from "next/headers";
 
 const MAX_CART_ITEMS = 50;
@@ -60,7 +64,7 @@ export async function addToCart(
       .doc(variantId);
     const productRef = store.collection(collections.products).doc(productId);
 
-    const now = new Date();
+    const now = Timestamp.now();
 
     const item = await store.runTransaction(async (tx): Promise<CartItem> => {
       const [cartSnap, cartItemSnap, productSnap] = await Promise.all([
@@ -107,12 +111,12 @@ export async function addToCart(
         );
       }
 
-      let addedAt: Date;
+      let addedAt: Timestamp;
       let priceAtAdded: number;
 
       if (cartItemSnap.exists) {
         const existing = cartItemSnap.data() as CartItemDocument;
-        addedAt = existing.addedAt.toDate();
+        addedAt = existing.addedAt;
         priceAtAdded = existing.priceAtAdded;
 
         tx.update(cartItemRef, {
@@ -164,8 +168,8 @@ export async function addToCart(
         priceAtAdded,
         currentPrice,
         priceChange: computePriceChange(priceAtAdded, currentPrice),
-        addedAt,
-        updatedAt: now,
+        addedAt: addedAt.toDate().toISOString(),
+        updatedAt: now.toDate().toISOString(),
       };
     });
 
@@ -202,6 +206,8 @@ export async function removeItemFromCart(
       .collection(collections.cartItems)
       .doc(variantId);
 
+    const now = Timestamp.now();
+
     await store.runTransaction(async (transaction) => {
       const [cartSnap, cartItemSnap] = await Promise.all([
         transaction.get(cartRef),
@@ -218,8 +224,8 @@ export async function removeItemFromCart(
       transaction.update(cartRef, {
         totalQuantity: FieldValue.increment(-removedQuantity),
         totalItems: FieldValue.increment(-1),
-        updatedAt: FieldValue.serverTimestamp(),
-        lastActiveAt: FieldValue.serverTimestamp(),
+        updatedAt: now,
+        lastActiveAt: now,
       });
     });
 
@@ -255,12 +261,18 @@ export async function incrementOrDecreaseQuantity(
     const cartItemRef = cartRef
       .collection(collections.cartItems)
       .doc(variantId);
+    const productRef = store.collection(collections.products).doc(productId);
+
+    const now = Timestamp.now();
 
     await store.runTransaction(async (tx) => {
-      const [cartSnap, cartItemSnap] = await Promise.all([
-        tx.get(cartRef),
-        tx.get(cartItemRef),
-      ]);
+      const reads = [tx.get(cartRef), tx.get(cartItemRef)];
+
+      if (type === "increase") {
+        reads.push(tx.get(productRef));
+      }
+
+      const [cartSnap, cartItemSnap, productSnap] = await Promise.all(reads);
 
       if (!cartSnap.exists) throw new AppError("Cart not found.", "NOT_FOUND");
       if (!cartItemSnap.exists)
@@ -268,14 +280,9 @@ export async function incrementOrDecreaseQuantity(
 
       const currentItem = cartItemSnap.data() as CartItemDocument;
       const itemQuantityInCart = currentItem.quantity;
-      const now = FieldValue.serverTimestamp();
 
       if (type === "increase") {
-        const productRef = store
-          .collection(collections.products)
-          .doc(productId);
-        const productSnap = await tx.get(productRef);
-        if (!productSnap.exists)
+        if (!productSnap || !productSnap.exists)
           throw new AppError("Product does not exist anymore.", "NOT_FOUND");
 
         const product = normalizeProductDoc(
