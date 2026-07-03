@@ -28,9 +28,9 @@ export function createEmptyCart(cartId: string): Cart {
     totalItems: 0,
     totalQuantity: 0,
     subtotal: 0,
-    lastActiveAt: now,
-    updatedAt: now,
-    createdAt: now,
+    lastActiveAt: now.toISOString(),
+    updatedAt: now.toISOString(),
+    createdAt: now.toISOString(),
   };
 }
 
