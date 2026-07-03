@@ -1,13 +1,13 @@
 import { ProductFilters } from "@/entities/product";
 import { PAGE_SIZE } from "@/features/product/search-params";
 import { infiniteQueryOptions } from "@tanstack/react-query";
-import { getProducts } from "./product-actions";
+import { getProductsAction } from "./product-actions";
 
 export const productFeedQueryOptions = (filters: ProductFilters) =>
   infiniteQueryOptions({
     queryKey: ["products-feed", filters] as const,
     queryFn: async ({ pageParam }) =>
-      await getProducts({
+      await getProductsAction({
         ...filters,
         limit: PAGE_SIZE,
         startAfterDocId: pageParam || undefined,

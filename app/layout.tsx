@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { Geologica, Raleway } from "next/font/google";
 import { Toaster } from "sonner";
 import Providers from "./providers";
+import NextTopLoader from "nextjs-toploader";
 
 export const metadata: Metadata = {
   title: {
@@ -39,6 +40,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <Providers>
           <Toaster position="top-center" />
           <div className="flex min-h-screen flex-col">
+            <NextTopLoader shadow={false} showSpinner={false} color="#000" />
             {children}
             <Modals />
           </div>

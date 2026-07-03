@@ -1,13 +1,8 @@
 "use server";
 
-import {
-  ProductCard,
-  ProductDocument,
-  ProductFilters,
-} from "@/entities/product";
+import { ProductDocument, ProductFilters } from "@/entities/product";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { collections, store } from "@/lib/firebase/admin";
-import { normalizeProductCard, PRODUCT_CARD_FIELDS } from "@/lib/product";
 import { getUserFromSession } from "@/lib/session";
 import {
   createProductActionSchema,
@@ -15,10 +10,10 @@ import {
 } from "@/schema/product.schema";
 import { deleteImage, uploadImage } from "@/utils/cloudinary";
 import { randomBytes } from "crypto";
-import { DocumentReference, Timestamp } from "firebase-admin/firestore";
-import { cacheLife, cacheTag, updateTag } from "next/cache";
+import { Timestamp } from "firebase-admin/firestore";
+import { updateTag } from "next/cache";
 import { cookies } from "next/headers";
-import { PAGE_SIZE } from "./search-params";
+import { getProducts } from "./product-queries";
 
 export type ActionResult<T = void> =
   | { success: true; data: T }
@@ -235,126 +230,6 @@ export async function deleteProducts(ids: string[]) {
   return { deleted: ids.length };
 }
 
-export interface GetProductsResult {
-  products: ProductCard[];
-  lastDocId: string | null;
-  hasMore: boolean;
-  filteredCount: number;
-}
-
-function isDefaultView(filters: ProductFilters): boolean {
-  return (
-    filters.isFeatured === undefined &&
-    filters.isBestSeller === undefined &&
-    filters.brand === undefined &&
-    filters.categoryId === undefined &&
-    filters.startAfterDocId === undefined &&
-    filters.sortBy === "createdAt" &&
-    filters.sortDir === "desc"
-  );
-}
-
-export async function getProducts(
-  filters: ProductFilters,
-): Promise<GetProductsResult> {
-  if (isDefaultView(filters)) {
-    return getDefaultProducts(filters.limit ?? PAGE_SIZE);
-  }
-
-  return getProductsUncached(filters);
-}
-
-async function getDefaultProducts(limit: number): Promise<GetProductsResult> {
-  "use cache";
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.allProducts);
-
-  return getProductsUncached({
-    sortBy: "createdAt",
-    sortDir: "desc",
-    limit,
-  });
-}
-
-async function getProductsUncached(
-  filters: ProductFilters,
-): Promise<GetProductsResult> {
-  const {
-    isFeatured,
-    isBestSeller,
-    brand,
-    categoryId,
-    sortBy = "createdAt",
-    sortDir = "desc",
-    limit = PAGE_SIZE,
-    startAfterDocId,
-  } = filters;
-
-  let baseQuery: FirebaseFirestore.Query = store
-    .collection(collections.products)
-    .select(...PRODUCT_CARD_FIELDS);
-
-  if (isFeatured !== undefined) {
-    baseQuery = baseQuery.where("isFeatured", "==", isFeatured);
-  }
-  if (isBestSeller !== undefined) {
-    baseQuery = baseQuery.where("isBestSeller", "==", isBestSeller);
-  }
-  if (brand !== undefined) {
-    const brands = Array.isArray(brand) ? brand : [brand];
-    baseQuery =
-      brands.length === 1
-        ? baseQuery.where("brand", "==", brands[0])
-        : baseQuery.where("brand", "in", brands);
-  }
-
-  if (categoryId !== undefined) {
-    const ids = Array.isArray(categoryId) ? categoryId : [categoryId];
-    if (ids.length === 1) {
-      const ref: DocumentReference = store.doc(
-        `${collections.categories}/${ids[0]}`,
-      );
-      baseQuery = baseQuery.where("category", "==", ref);
-    } else {
-      const refs = ids.map((id) =>
-        store.doc(`${collections.categories}/${id}`),
-      );
-      baseQuery = baseQuery.where("category", "in", refs);
-    }
-  }
-
-  const isFirstPage = !startAfterDocId;
-
-  const [filteredCountSnap, paginatedSnap] = await Promise.all([
-    isFirstPage ? baseQuery.count().get() : Promise.resolve(null),
-    (async () => {
-      let q = baseQuery.orderBy(sortBy, sortDir);
-      if (startAfterDocId) {
-        const cursorSnap = await store
-          .collection(collections.products)
-          .doc(startAfterDocId)
-          .get();
-        if (cursorSnap.exists) q = q.startAfter(cursorSnap);
-      }
-      return q.limit(limit + 1).get();
-    })(),
-  ]);
-
-  const filteredCount = filteredCountSnap ? filteredCountSnap.data().count : -1;
-
-  if (paginatedSnap.empty) {
-    return { products: [], lastDocId: null, hasMore: false, filteredCount };
-  }
-
-  const hasMore = paginatedSnap.docs.length > limit;
-  const docs = hasMore
-    ? paginatedSnap.docs.slice(0, limit)
-    : paginatedSnap.docs;
-
-  return {
-    products: docs.map(normalizeProductCard),
-    lastDocId: hasMore ? docs[docs.length - 1].id : null,
-    hasMore,
-    filteredCount,
-  };
+export async function getProductsAction(filters: ProductFilters) {
+  return getProducts(filters);
 }

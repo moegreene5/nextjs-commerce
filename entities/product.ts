@@ -122,3 +122,10 @@ export interface ProductFilters {
   limit?: number;
   startAfterDocId?: string;
 }
+
+export interface GetProductsResult {
+  products: ProductCard[];
+  lastDocId: string | null;
+  hasMore: boolean;
+  filteredCount: number;
+}

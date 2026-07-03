@@ -21,6 +21,7 @@
     "ioredis": "^5.10.0",
     "lucide-react": "^0.563.0",
     "next": "^16.2.0",
+    "nextjs-toploader": "^3.9.17",
     "npm": "^11.10.1",
     "radix-ui": "^1.4.3",
     "rate-limiter-flexible": "^9.1.0",

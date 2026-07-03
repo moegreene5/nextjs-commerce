@@ -1,21 +1,11 @@
 import { getProduct } from "@/features/product/product-queries";
-import { CACHE_TAGS } from "@/lib/cache-tags";
 import { makeKeywords } from "@/utils/make-keywords";
 import { Metadata } from "next";
-import { cacheLife, cacheTag } from "next/cache";
 
 export async function generateMetadata({
   params,
 }: PageProps<"/product/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  return getCachedMetadata(slug);
-}
-
-async function getCachedMetadata(slug: string): Promise<Metadata> {
-  "use cache";
-  cacheLife("max");
-  cacheTag(CACHE_TAGS.product(slug));
-
   const product = await getProduct(slug);
 
   if (!product) return {};
