@@ -11,11 +11,11 @@ const nextConfig: NextConfig = {
     appNewScrollHandler: true,
   },
   reactCompiler: true,
-  serverExternalPackages: ["jwks-rsa"],
+  serverExternalPackages: ["firebase-admin", "jwks-rsa"],
   images: {
     remotePatterns: [
       // { protocol: "https", hostname: "firebasestorage.googleapis.com" },
-      { hostname: "res.cloudinary.com", protocol: "https", port: "" },
+      { hostname: "res.cloudinary.com", protocol: "https" },
     ],
   },
 };
