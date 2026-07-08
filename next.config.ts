@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
     appNewScrollHandler: true,
   },
   reactCompiler: true,
-  transpilePackages: ["firebase-admin", "jwks-rsa"],
+  serverExternalPackages: ["jwks-rsa"],
   images: {
     remotePatterns: [
       // { protocol: "https", hostname: "firebasestorage.googleapis.com" },
