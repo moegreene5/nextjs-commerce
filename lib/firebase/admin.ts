@@ -1,10 +1,9 @@
 import "server-only";
-
 import {
-  cert,
-  getApps,
   initializeApp,
+  getApps,
   getApp,
+  cert,
   type ServiceAccount,
 } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
@@ -17,20 +16,16 @@ export const serviceAccount: ServiceAccount = {
   clientEmail: process.env.CLIENT_EMAIL,
 };
 
-if (!getApps().length) {
-  initializeApp({
-    credential: cert(serviceAccount),
-    databaseURL: `https://${serviceAccount.projectId}.firebaseio.com`,
-    storageBucket: process.env.STORAGE_BUCKET,
-  });
-}
-
-export const app = getApp();
+export const app = !getApps().length
+  ? initializeApp({
+      credential: cert(serviceAccount),
+      databaseURL: `https://${serviceAccount.projectId}.firebaseio.com`,
+      storageBucket: process.env.STORAGE_BUCKET,
+    })
+  : getApp();
 
 export const auth = getAuth(app);
-
 export const store = getFirestore(app);
-
 export const storage = getStorage(app);
 
 export const collections = {
