@@ -30,18 +30,20 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
   const form = useAppForm({
     defaultValues: { quantity: 1 as QuantityValue },
     onSubmit: ({ value }) => {
-      addToCartMutation.mutate({
-        productId: product.id,
-        variantId: selectedVariant.id,
-        quantity: value.quantity || 1,
-        slug: product.slug,
-        name: product.name,
-        image: product.images[0]?.url,
-        size: selectedVariant.size,
-        currentPrice: selectedVariant.displayPrice,
-        isOnSale: isOnSale,
-        originalPrice: selectedVariant.displayPrice,
-      });
+      try {
+        addToCartMutation.mutateAsync({
+          productId: product.id,
+          variantId: selectedVariant.id,
+          quantity: value.quantity || 1,
+          slug: product.slug,
+          name: product.name,
+          image: product.images[0]?.url,
+          size: selectedVariant.size,
+          currentPrice: selectedVariant.displayPrice,
+          isOnSale: isOnSale,
+          originalPrice: selectedVariant.displayPrice,
+        });
+      } catch (error) {}
     },
   });
 
