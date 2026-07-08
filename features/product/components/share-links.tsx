@@ -40,7 +40,7 @@ function ShareLinks({ title, url }: ShareLinksProps) {
     try {
       await navigator.share({ title, url });
     } catch (err) {
-      console.error("Share cancelled or failed");
+      console.error("Share failed:", err);
     }
   };
 
@@ -61,53 +61,38 @@ function ShareLinks({ title, url }: ShareLinksProps) {
         </Button>
       )}
 
-      <a
-        href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Share on Facebook (opens in new tab)"
-      >
-        <Button
-          variant="outline"
-          size="icon-lg"
-          tabIndex={-1}
-          aria-hidden="true"
+      <Button variant="outline" size="icon-lg" asChild>
+        <a
+          href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Share on Facebook (opens in new tab)"
         >
           <FiFacebook aria-hidden="true" />
-        </Button>
-      </a>
+        </a>
+      </Button>
 
-      <a
-        href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Share on X / Twitter (opens in new tab)"
-      >
-        <Button
-          variant="outline"
-          size="icon-lg"
-          tabIndex={-1}
-          aria-hidden="true"
+      <Button variant="outline" size="icon-lg" asChild>
+        <a
+          href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Share on X / Twitter (opens in new tab)"
         >
           <FiTwitter aria-hidden="true" />
-        </Button>
-      </a>
+        </a>
+      </Button>
 
-      <a
-        href={`https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Share on WhatsApp (opens in new tab)"
-      >
-        <Button
-          variant="outline"
-          size="icon-lg"
-          tabIndex={-1}
-          aria-hidden="true"
+      <Button variant="outline" size="icon-lg" asChild>
+        <a
+          href={`https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Share on WhatsApp (opens in new tab)"
         >
           <FaWhatsapp aria-hidden="true" />
-        </Button>
-      </a>
+        </a>
+      </Button>
 
       <Button
         variant="outline"

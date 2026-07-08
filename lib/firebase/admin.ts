@@ -1,4 +1,12 @@
-import admin, { ServiceAccount } from "firebase-admin";
+import "server-only";
+
+import {
+  cert,
+  getApps,
+  initializeApp,
+  getApp,
+  type ServiceAccount,
+} from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
@@ -9,15 +17,15 @@ export const serviceAccount: ServiceAccount = {
   clientEmail: process.env.CLIENT_EMAIL,
 };
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+if (!getApps().length) {
+  initializeApp({
+    credential: cert(serviceAccount),
     databaseURL: `https://${serviceAccount.projectId}.firebaseio.com`,
     storageBucket: process.env.STORAGE_BUCKET,
   });
 }
 
-export const app = admin.app();
+export const app = getApp();
 
 export const auth = getAuth(app);
 
