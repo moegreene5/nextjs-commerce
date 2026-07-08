@@ -37,13 +37,13 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
           quantity: value.quantity || 1,
           slug: product.slug,
           name: product.name,
-          image: product.images[0]?.url,
+          image: product.images[0].url,
           size: selectedVariant.size,
           currentPrice: selectedVariant.displayPrice,
           isOnSale: isOnSale,
-          originalPrice: selectedVariant.displayPrice,
+          originalPrice: selectedVariant.price,
         });
-      } catch (error) {}
+      } catch {}
     },
   });
 
@@ -174,7 +174,6 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
                 type="number"
                 id="quantity"
                 aria-label="Product quantity"
-                aria-live="polite"
                 className="w-12 text-center border-none shadow-none focus-visible:ring-1 focus-visible:ring-blue-300 rounded-sm p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 value={field.state.value}
                 onChange={(e) => handleInputChange(e.target.value)}
@@ -195,6 +194,10 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
               >
                 <Plus aria-hidden="true" />
               </Button>
+
+              <span className="sr-only" role="status" aria-live="polite">
+                Quantity: {field.state.value || 1}
+              </span>
             </div>
           )}
         </form.Field>
