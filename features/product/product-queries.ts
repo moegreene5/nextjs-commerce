@@ -17,6 +17,7 @@ import {
 import { FieldPath } from "firebase-admin/firestore";
 import { cacheLife, cacheTag } from "next/cache";
 import { notFound } from "next/navigation";
+import { PAGE_SIZE } from "./search-params";
 
 export const getProduct = async (slug: string) => {
   "use cache";
@@ -165,19 +166,19 @@ export async function getProducts(
     ? [...filters.categoryId].sort().join(",")
     : filters.categoryId || "";
 
-  return runFirebaseQuery(
+  return runAllProductsQuery(
     filters.isFeatured,
     filters.isBestSeller,
     brandKey,
     categoryKey,
     filters.sortBy ?? "createdAt",
     filters.sortDir ?? "desc",
-    filters.limit ?? 12,
+    filters.limit ?? PAGE_SIZE,
     filters.startAfterDocId || null,
   );
 }
 
-async function runFirebaseQuery(
+async function runAllProductsQuery(
   isFeatured: boolean | undefined,
   isBestSeller: boolean | undefined,
   brandKey: string,

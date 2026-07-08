@@ -1,6 +1,6 @@
 "use server";
 
-import { ProductDocument, ProductFilters } from "@/entities/product";
+import { ProductDocument } from "@/entities/product";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { AppError } from "@/lib/errors";
 import { collections, store } from "@/lib/firebase/admin";
@@ -11,7 +11,6 @@ import { randomBytes } from "crypto";
 import { Timestamp } from "firebase-admin/firestore";
 import { updateTag } from "next/cache";
 import { cookies } from "next/headers";
-import { getProducts } from "./product-queries";
 
 export type ActionResult<T = void> =
   | { success: true; data: T }
@@ -246,8 +245,4 @@ export async function deleteProducts(ids: string[]) {
   if (hasBestSeller) updateTag(CACHE_TAGS.bestSellers);
 
   return { deleted: ids.length };
-}
-
-export async function getProductsAction(filters: ProductFilters) {
-  return getProducts(filters);
 }
