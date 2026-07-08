@@ -11,7 +11,7 @@ export default async function CheckoutLayout({ children }: LayoutProps<"/">) {
           <ShoppingBag className="size-5 text-light-blue" />
         </Link>
       </header>
-      {children}
+      <main>{children}</main>
     </>
   );
 }

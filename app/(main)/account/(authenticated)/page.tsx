@@ -5,16 +5,14 @@ import { Suspense } from "react";
 
 export default function Account() {
   return (
-    <main>
-      <Container className="py-12">
-        <h2 className="uppercase text-sm lg:text-base mb-6 md:mb-8">
-          Your Personal Dashboard
-        </h2>
-        <Suspense fallback={<AccountSkeleton />}>
-          <AccountPage />
-        </Suspense>
-      </Container>
-    </main>
+    <Container className="py-12">
+      <h2 className="uppercase text-sm lg:text-base mb-6 md:mb-8">
+        Your Personal Dashboard
+      </h2>
+      <Suspense fallback={<AccountSkeleton />}>
+        <AccountPage />
+      </Suspense>
+    </Container>
   );
 }
 

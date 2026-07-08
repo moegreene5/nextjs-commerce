@@ -32,6 +32,6 @@ export const collections = {
   segment: "segment",
   brands: "brands",
   categories: "categories",
-  order: "order",
+  orders: "orders",
   cartItems: "cartItems",
 };

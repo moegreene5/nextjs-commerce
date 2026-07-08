@@ -5,7 +5,7 @@ export default async function MainLayout({ children }: LayoutProps<"/">) {
   return (
     <>
       <Header />
-      {children}
+      <main>{children}</main>
       <Footer />
     </>
   );

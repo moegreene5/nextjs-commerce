@@ -18,11 +18,11 @@ export default async function Page({ params }: PageProps<"/product/[slug]">) {
   const { slug } = await params;
 
   return (
-    <main>
+    <div>
       <Container className="py-4">
         <Product slug={slug} />
       </Container>
       <RelatedProducts slug={slug} />
-    </main>
+    </div>
   );
 }

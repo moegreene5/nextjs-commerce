@@ -26,8 +26,7 @@ export default function Page() {
             Active Sessions
           </h2>
           <p className="max-w-sm text-[11px] uppercase leading-relaxed tracking-[0.15em] text-neutral-400">
-            Signs you out from all other devices. You will remain signed in on
-            this device.
+            Signs you out from all other devices.
           </p>
         </div>
         <SignOutAllDevices />

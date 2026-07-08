@@ -29,8 +29,8 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
 
   const form = useAppForm({
     defaultValues: { quantity: 1 as QuantityValue },
-    onSubmit: async ({ value }) => {
-      await addToCartMutation.mutateAsync({
+    onSubmit: ({ value }) => {
+      addToCartMutation.mutate({
         productId: product.id,
         variantId: selectedVariant.id,
         quantity: value.quantity || 1,

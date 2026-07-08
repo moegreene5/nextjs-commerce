@@ -28,7 +28,7 @@ export default function Page({
   searchParams,
 }: PageProps<"/collections/shop-all">) {
   return (
-    <main className="min-h-[calc(100svh-80px)]">
+    <div className="min-h-[calc(100svh-80px)]">
       <div className="relative w-full grid md:grid-cols-2 xl:grid-cols-[12fr_11fr] bg-[#FDF3C0]">
         <div className="relative w-full h-64 md:h-98 md:order-2">
           <Image
@@ -62,7 +62,7 @@ export default function Page({
           </Suspense>
         </div>
       </Container>
-    </main>
+    </div>
   );
 }
 
