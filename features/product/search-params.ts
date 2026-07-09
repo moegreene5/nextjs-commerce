@@ -10,7 +10,7 @@ export const SORT_VALUES = [
   "name-desc",
 ] as const;
 
-export type SortValue = typeof SORT_VALUES[number];
+export type SortValue = (typeof SORT_VALUES)[number];
 
 export function parseSearchParams(searchParams: SearchParams) {
   const get = (key: string) => {
@@ -72,4 +72,36 @@ function parseSortParam(
     default:
       return ["createdAt", "desc"];
   }
+}
+
+const VALID_SORT_BY = ["createdAt", "name"] as const;
+const VALID_SORT_DIR = ["asc", "desc"] as const;
+
+export function parseApiFilters(searchParams: URLSearchParams): ProductFilters {
+  const brand = searchParams.getAll("brand");
+  const category = searchParams.getAll("category");
+
+  const sortByParam = searchParams.get("sortBy");
+  const sortDirParam = searchParams.get("sortDir");
+
+  const sortBy: ProductFilters["sortBy"] = VALID_SORT_BY.includes(
+    sortByParam as (typeof VALID_SORT_BY)[number],
+  )
+    ? (sortByParam as ProductFilters["sortBy"])
+    : "createdAt";
+
+  const sortDir: ProductFilters["sortDir"] = VALID_SORT_DIR.includes(
+    sortDirParam as (typeof VALID_SORT_DIR)[number],
+  )
+    ? (sortDirParam as ProductFilters["sortDir"])
+    : "desc";
+
+  return {
+    ...(brand.length > 0 && { brand }),
+    ...(category.length > 0 && { categoryId: category }),
+    ...(searchParams.get("featured") === "true" && { isFeatured: true }),
+    ...(searchParams.get("bestseller") === "true" && { isBestSeller: true }),
+    sortBy,
+    sortDir,
+  };
 }

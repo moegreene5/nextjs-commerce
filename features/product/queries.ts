@@ -23,7 +23,8 @@ export const productFeedQueryOptions = (filters: ProductFilters) =>
 
       if (filters.isFeatured) searchParams.set("featured", "true");
       if (filters.isBestSeller) searchParams.set("bestseller", "true");
-      if (filters.sortBy) searchParams.set("sort", filters.sortBy);
+      if (filters.sortBy) searchParams.set("sortBy", filters.sortBy);
+      if (filters.sortDir) searchParams.set("sortDir", filters.sortDir);
       if (pageParam) searchParams.set("startAfterDocId", pageParam);
 
       const requestUrl = getApiUrl("/api/products");

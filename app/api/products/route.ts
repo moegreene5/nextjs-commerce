@@ -1,27 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  buildFilters,
-  parseSearchParams,
-  PAGE_SIZE,
-  SortValue,
-} from "@/features/product/search-params";
+import { parseApiFilters, PAGE_SIZE } from "@/features/product/search-params";
 import { getProducts } from "@/features/product/product-queries";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
 
-    const rawParams: Record<string, string | string[]> = {};
-
-    searchParams.forEach((_, key) => {
-      const values = searchParams.getAll(key);
-      rawParams[key] = values.length > 1 ? values : values[0];
-    });
-
-    const parsed = parseSearchParams(rawParams);
-
-    const filters = buildFilters(parsed);
-
+    const filters = parseApiFilters(searchParams);
     const startAfterDocId = searchParams.get("startAfterDocId") || undefined;
 
     const data = await getProducts({
