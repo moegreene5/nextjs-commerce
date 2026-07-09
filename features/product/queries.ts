@@ -1,11 +1,20 @@
 import { GetProductsResult, ProductFilters } from "@/entities/product";
-import { getApiUrl } from "@/lib/constants";
+import { PAGE_SIZE } from "@/features/product/search-params";
 import { infiniteQueryOptions } from "@tanstack/react-query";
+import { getProductAction } from "./product-actions";
 
 export const productFeedQueryOptions = (filters: ProductFilters) =>
   infiniteQueryOptions({
     queryKey: ["products-feed", filters] as const,
     queryFn: async ({ pageParam }): Promise<GetProductsResult> => {
+      if (typeof window === "undefined") {
+        return getProductAction({
+          ...filters,
+          limit: PAGE_SIZE,
+          startAfterDocId: pageParam ?? undefined,
+        });
+      }
+
       const searchParams = new URLSearchParams();
 
       if (filters.brand) {
@@ -20,18 +29,13 @@ export const productFeedQueryOptions = (filters: ProductFilters) =>
           : [filters.categoryId];
         categories.forEach((c) => searchParams.append("category", c));
       }
-
       if (filters.isFeatured) searchParams.set("featured", "true");
       if (filters.isBestSeller) searchParams.set("bestseller", "true");
       if (filters.sortBy) searchParams.set("sortBy", filters.sortBy);
       if (filters.sortDir) searchParams.set("sortDir", filters.sortDir);
       if (pageParam) searchParams.set("startAfterDocId", pageParam);
 
-      const requestUrl = getApiUrl("/api/products");
-
-      requestUrl.search = searchParams.toString();
-
-      const response = await fetch(requestUrl);
+      const response = await fetch(`/api/products?${searchParams.toString()}`);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch product feed: ${response.statusText}`);
