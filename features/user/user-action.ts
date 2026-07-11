@@ -1,26 +1,16 @@
 "use server";
 
 import { ActionResult, SERVER_ERROR } from "@/entities/action";
-import { auth, store } from "@/lib/firebase/admin";
+import { requireAuth } from "@/lib/auth";
+import { AppError } from "@/lib/errors";
+import { auth, collections, store } from "@/lib/firebase/admin";
 import { signInWithEmailPassword } from "@/lib/firebase/sign-in";
-import { getUserFromSession } from "@/lib/session";
 import { ProfileData, userProfileSchema } from "@/schema/register.schema";
 import { refresh } from "next/cache";
-import { cookies } from "next/headers";
 
 export async function updateUserProfile(
   data: ProfileData,
 ): Promise<ActionResult> {
-  const cookieStore = await cookies();
-  const session = await getUserFromSession(cookieStore);
-
-  if (!session) {
-    return { success: false, type: "auth", message: "Unauthorized" };
-  }
-
-  const uid = session.user.uid;
-  const currentEmail = session.user.email as string;
-
   const parsed = userProfileSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -34,6 +24,13 @@ export async function updateUserProfile(
   const { password, firstName, lastName, phoneNumber, username } = parsed.data;
 
   try {
+    const { user } = await requireAuth({
+      unauthenticatedMessage: "Unauthorized",
+    });
+
+    const uid = user.uid;
+    const currentEmail = user.email as string;
+
     const signIn = await signInWithEmailPassword(currentEmail, password);
 
     if (!signIn.success) {
@@ -44,16 +41,16 @@ export async function updateUserProfile(
       };
     }
 
-    const nameChanged = `${firstName} ${lastName}` !== session.user.displayName;
+    const nameChanged = `${firstName} ${lastName}` !== user.displayName;
 
     if (nameChanged) {
       await auth.updateUser(uid, {
-        ...(nameChanged ? { displayName: `${firstName} ${lastName}` } : {}),
+        displayName: `${firstName} ${lastName}`,
       });
     }
 
     await store
-      .collection("profile")
+      .collection(collections.profile)
       .doc(uid)
       .update({
         name: { firstName, lastName },
@@ -65,6 +62,9 @@ export async function updateUserProfile(
     refresh();
     return { success: true };
   } catch (err: unknown) {
+    if (err instanceof AppError) {
+      return { success: false, type: "auth", message: err.message };
+    }
     console.error("Update profile error:", err);
     return { success: false, type: "server", message: SERVER_ERROR };
   }

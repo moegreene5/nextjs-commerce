@@ -37,4 +37,5 @@ export const collections = {
   categories: "categories",
   orders: "orders",
   cartItems: "cartItems",
+  addresses: "addresses",
 };

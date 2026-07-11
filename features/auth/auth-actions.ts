@@ -6,14 +6,12 @@ import {
   SERVER_ERROR,
 } from "@/entities/action";
 import { Profile } from "@/entities/user";
+import { requireAuth } from "@/lib/auth";
+import { AppError } from "@/lib/errors";
 import { auth, collections, store } from "@/lib/firebase/admin";
 import { signInWithEmailPassword } from "@/lib/firebase/sign-in";
 import { sendEmail } from "@/lib/mail";
-import {
-  createUserSession,
-  deleteUserSession,
-  getUserFromSession,
-} from "@/lib/session";
+import { createUserSession, deleteUserSession } from "@/lib/session";
 import {
   ChangePasswordInput,
   changePasswordSchema,
@@ -23,10 +21,10 @@ import { RegisterData, userRegisterSchema } from "@/schema/register.schema";
 import { ForgotPassword, forgotPasswordSchema } from "@/schema/reset.schema";
 import { UserRecord } from "firebase-admin/auth";
 import { Route } from "next";
+import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect, RedirectType } from "next/navigation";
 import { associateCartWithUser } from "../cart/cart-actions";
-import { refresh } from "next/cache";
 
 export async function registerCustomer(
   data: RegisterData,
@@ -230,32 +228,24 @@ export const sendResetPasswordEmail = async (
 export async function ChangePassword(
   input: ChangePasswordInput,
 ): Promise<ActionResult> {
-  const session = await getUserFromSession(await cookies());
-  if (!session?.user.uid) {
-    return {
-      success: false,
-      message: "Unauthorized access denied",
-      type: "auth",
-    };
-  }
-
-  const { email, uid: userId } = session.user;
-
-  const inputValidation = changePasswordSchema.safeParse(input);
-
-  if (!inputValidation.success) {
-    return {
-      success: false,
-      type: "validation",
-      fields: inputValidation.error.flatten().fieldErrors,
-    };
-  }
-
-  const { currentPassword, newPassword } = inputValidation.data;
-
   try {
-    const verify = await signInWithEmailPassword(email!, currentPassword);
+    const { user } = await requireAuth({
+      unauthenticatedMessage: "Unauthorized access denied",
+    });
+    const { email, uid: userId } = user;
 
+    const inputValidation = changePasswordSchema.safeParse(input);
+    if (!inputValidation.success) {
+      return {
+        success: false,
+        type: "validation",
+        fields: inputValidation.error.flatten().fieldErrors,
+      };
+    }
+
+    const { currentPassword, newPassword } = inputValidation.data;
+
+    const verify = await signInWithEmailPassword(email!, currentPassword);
     if (!verify.success) {
       if (verify.message.includes("Too many attempts")) {
         return { success: false, type: "server", message: verify.message };
@@ -271,6 +261,9 @@ export async function ChangePassword(
     await auth.revokeRefreshTokens(userId);
     await logOut();
   } catch (error) {
+    if (error instanceof AppError) {
+      return { success: false, type: "auth", message: error.message };
+    }
     console.error("[ChangePassword]", error);
     return {
       success: false,
@@ -289,19 +282,16 @@ type RevokeSessionsResult = Exclude<
 
 export async function revokeAllSessions(): Promise<RevokeSessionsResult> {
   try {
-    const session = await getUserFromSession(await cookies());
+    const { uid } = await requireAuth({
+      unauthenticatedMessage: "Unauthorized access denied",
+    });
 
-    if (!session || !session.user.uid) {
-      return {
-        success: false,
-        type: "auth",
-        message: "Unauthorized access denied",
-      };
-    }
-
-    await auth.revokeRefreshTokens(session.user.uid);
+    await auth.revokeRefreshTokens(uid);
     await logOut();
   } catch (error) {
+    if (error instanceof AppError) {
+      return { success: false, type: "auth", message: error.message };
+    }
     console.error("[revokeAllSessions]", error);
     return {
       success: false,

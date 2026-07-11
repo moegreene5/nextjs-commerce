@@ -4,14 +4,13 @@ import { ProductDocument, ProductFilters } from "@/entities/product";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { AppError } from "@/lib/errors";
 import { collections, store } from "@/lib/firebase/admin";
-import { getUserFromSession } from "@/lib/session";
 import { createProductActionSchema } from "@/schema/product.schema";
 import { deleteImage, uploadImage } from "@/utils/cloudinary";
 import { randomBytes } from "crypto";
 import { Timestamp } from "firebase-admin/firestore";
 import { updateTag } from "next/cache";
-import { cookies } from "next/headers";
 import { getProducts } from "./product-queries";
+import { requireAuth } from "@/lib/auth";
 
 export type ActionResult<T = void> =
   | { success: true; data: T }
@@ -67,20 +66,14 @@ function parseForm(form: FormData) {
 export async function createProduct(
   form: FormData,
 ): Promise<ActionResult<{ id: string; name: string }>> {
-  const cookieStore = await cookies();
-  const session = await getUserFromSession(cookieStore);
-
-  if (!session) {
-    return { success: false, error: "Not Authorized." };
-  }
-
-  if (session.claims.role !== "admin") {
-    return { success: false, error: "Insufficient permissions" };
-  }
-
   let uploadedUrls: string[] = [];
 
   try {
+    await requireAuth({
+      role: "admin",
+      forbiddenMessage: "Insuffecient permissions",
+    });
+
     const parsed = createProductActionSchema.safeParse(parseForm(form));
 
     if (!parsed.success) {

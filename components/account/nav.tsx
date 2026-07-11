@@ -12,7 +12,7 @@ import { logOut } from "@/features/auth/auth-actions";
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useTransition } from "react";
+import { useTransition } from "react";
 
 type NavLink = {
   label: string;
@@ -29,10 +29,8 @@ export default function AccountNav({ links, showLogout = false }: Props) {
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
 
-  const currentValue = useMemo(
-    () => links.find((l) => l.href === pathname)?.href ?? links[0]?.href,
-    [pathname, links],
-  );
+  const currentValue =
+    links.find((l) => l.href === pathname)?.href ?? links[0]?.href;
 
   const handleLogout = async () => {
     startTransition(async () => {
@@ -49,17 +47,17 @@ export default function AccountNav({ links, showLogout = false }: Props) {
           onValueChange={(v) => router.push(v as Route)}
         >
           <SelectTrigger
-            className="backdrop-blur-sm rounded-lg h-10 min-w-40 uppercase px-2 text-sm bg-light-grey border-none outline-none focus:ring-0 focus:border-none transition-all duration-300"
+            className="h-10 min-w-40 rounded-lg border border-black bg-white px-2 text-sm uppercase text-black transition-all duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
             aria-label="Account navigation switch"
           >
             <SelectValue placeholder="Select an option" />
           </SelectTrigger>
-          <SelectContent className="uppercase text-xs border-gray-e1 rounded-md bg-white">
-            {links?.map(({ label, href }, index) => (
+          <SelectContent className="rounded-md border-black bg-white text-xs uppercase">
+            {links?.map(({ label, href }) => (
               <SelectItem
-                key={index}
+                key={href}
                 value={href}
-                className="hover:bg-gray-100 transition-all duration-200 text-sm"
+                className="text-sm text-black transition-all duration-200 hover:bg-neutral-100"
               >
                 {label}
               </SelectItem>
@@ -71,7 +69,7 @@ export default function AccountNav({ links, showLogout = false }: Props) {
           <button
             disabled={isPending}
             onClick={handleLogout}
-            className="mt-4 text-[11px] uppercase tracking-[0.18em] text-neutral-400 transition-colors duration-300 hover:text-black"
+            className="mt-4 text-[11px] uppercase tracking-[0.18em] text-neutral-600 transition-colors duration-300 hover:text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:opacity-50"
           >
             {isPending ? "Signing out" : "Sign out"}
           </button>
@@ -87,7 +85,12 @@ export default function AccountNav({ links, showLogout = false }: Props) {
                 <Link
                   href={href}
                   prefetch
-                  className="flex items-center justify-between py-2.5 text-xs uppercase tracking-wider transition-colors duration-300"
+                  aria-current={isActive ? "page" : undefined}
+                  className={`flex items-center justify-between rounded-sm py-2.5 text-xs uppercase tracking-wider transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black ${
+                    isActive
+                      ? "text-black"
+                      : "text-neutral-600 hover:text-black"
+                  }`}
                 >
                   <span className="relative px-0.5">
                     {label}
@@ -109,7 +112,7 @@ export default function AccountNav({ links, showLogout = false }: Props) {
           <button
             onClick={handleLogout}
             disabled={isPending}
-            className="group flex items-center gap-2 text-xs uppercase"
+            className="group flex items-center gap-2 text-xs uppercase text-neutral-600 transition-colors duration-300 hover:text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:opacity-50"
           >
             <span className="relative">
               {isPending ? "Signing out" : "Sign out"}
