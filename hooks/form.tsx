@@ -1,6 +1,5 @@
 import {
   CheckboxField,
-  Select,
   SelectField,
   SubscribeButton,
   TextArea,
@@ -12,7 +11,6 @@ import { fieldContext, formContext } from "./form-context";
 export const { useAppForm } = createFormHook({
   fieldComponents: {
     TextField,
-    Select,
     TextArea,
     SelectField,
     CheckboxField,

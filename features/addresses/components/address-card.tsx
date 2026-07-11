@@ -1,10 +1,12 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Address } from "@/entities/address";
 import {
   removeAddress,
   setDefaultAddress,
 } from "@/features/addresses/address-actions";
+import { openModal } from "@/store/modal";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
@@ -84,13 +86,10 @@ export function AddressCard({ address }: { address: Address }) {
           aria-label={`Actions for ${address.label} address`}
           className="flex shrink-0 flex-row flex-wrap gap-2 sm:flex-col"
         >
-          <button
-            type="button"
-            className="border border-black px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-black hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
-          >
+          <Button onClick={() => openModal("address", address)}>
             Edit
             <span className="sr-only"> {address.label} address</span>
-          </button>
+          </Button>
 
           {!address.isDefault && (
             <button

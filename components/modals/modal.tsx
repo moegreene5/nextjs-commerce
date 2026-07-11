@@ -1,8 +1,9 @@
 "use client";
 
 import { Modal, useModalStore } from "@/store/modal";
-import CartSheet from "./cart-modal";
 import { useShallow } from "zustand/react/shallow";
+import AddressDialog from "./address-dialog";
+import CartSheet from "./cart-modal";
 
 export default function Modals() {
   const activeModalKeys = useModalStore(
@@ -26,7 +27,8 @@ function ModalFactory({ type }: { type: Modal }) {
   switch (type) {
     case "cart":
       return <CartSheet />;
-
+    case "address":
+      return <AddressDialog />;
     default:
       return null;
   }

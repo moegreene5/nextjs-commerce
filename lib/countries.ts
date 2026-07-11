@@ -255,6 +255,11 @@ export type CountryCode = (typeof countries)[number]["code"];
 
 export const countryCodes = new Set<string>(countries.map((c) => c.code));
 
+export const countryOptions = countries.map((c) => ({
+  label: c.name,
+  value: c.code,
+}));
+
 export function isValidCountry(code: string): boolean {
   return countryCodes.has(code);
 }

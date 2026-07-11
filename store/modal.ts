@@ -1,7 +1,9 @@
+import { Address } from "@/entities/address";
 import { create } from "zustand";
 
 type ModalEntityMap = {
   cart: null;
+  address: Address | null;
 };
 
 export type Modal = keyof ModalEntityMap;

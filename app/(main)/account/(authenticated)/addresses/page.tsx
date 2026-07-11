@@ -1,12 +1,12 @@
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getAddresses } from "@/features/addresses/address-queries";
+import AddAddressButton from "@/features/addresses/components/add-address";
 import { AddressCard } from "@/features/addresses/components/address-card";
 import { Suspense } from "react";
 
 export default function AddressesPage() {
   return (
-    <div className="space-y-6">
+    <div>
       <Suspense fallback={<AddressListSkeleton />}>
         <AddressList />
       </Suspense>
@@ -19,22 +19,26 @@ async function AddressList() {
 
   if (addresses.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-stone-200 p-10 text-center">
-        <p className="text-sm text-stone-400">
-          You haven't saved any addresses yet.
+      <div className="border border-dashed border-black p-10 text-center">
+        <p className="text-sm text-neutral-500">
+          You haven&apos;t saved any addresses yet.
         </p>
-        <Button className="mt-4">Add Address</Button>
+        <div className="mt-4 flex justify-center">
+          <AddAddressButton />
+        </div>
       </div>
     );
   }
 
   return (
-    <>
+    <div className="space-y-8">
+      <div className="flex justify-end">
+        <AddAddressButton />
+      </div>
       {addresses.map((a) => (
         <AddressCard key={a.id} address={a} />
       ))}
-      <Button>Add Address</Button>
-    </>
+    </div>
   );
 }
 

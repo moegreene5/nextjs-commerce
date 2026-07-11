@@ -1,11 +1,24 @@
 import { useStore } from "@tanstack/react-form";
 
+import { useFieldContext, useFormContext } from "@/hooks/form-context";
 import { cn } from "@/utils/cn";
-import { useFormContext, useFieldContext } from "@/hooks/form-context";
-import { LucideIcon, Loader2 } from "lucide-react";
+import { Loader2, LucideIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { Textarea } from "./ui/textarea";
+
+const focusRing =
+  "focus-visible:!outline focus-visible:!outline-2 focus-visible:!outline-offset-2 focus-visible:!outline-black focus-visible:!ring-0 focus-visible:!border-black";
+
+const invalidState =
+  "aria-invalid:ring-0 aria-invalid:ring-offset-0 aria-invalid:border-2 aria-invalid:border-red-500";
 
 export function SubscribeButton({
   label,
@@ -23,6 +36,11 @@ export function SubscribeButton({
           {...props}
           type="submit"
           disabled={isSubmitting || props.disabled}
+          className={cn(
+            "h-11 rounded-sm border border-black bg-black text-sm font-medium uppercase tracking-wide text-white transition-colors hover:bg-white hover:text-black disabled:pointer-events-none disabled:opacity-50",
+            focusRing,
+            props.className,
+          )}
         >
           {isSubmitting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -48,7 +66,7 @@ export function ErrorMessages({
       {errors.map((error) => (
         <div
           key={typeof error === "string" ? error : error.message}
-          className="text-red-500 mt-1 text-sm"
+          className="mt-1 text-sm text-red-400"
         >
           {typeof error === "string" ? error : error.message}
         </div>
@@ -75,7 +93,10 @@ export function TextField({
     <div className="space-y-1">
       <label htmlFor={label}>
         <div className="space-y-2">
-          <span>{label}</span>
+          <span className="text-sm text-black">
+            {label}
+            {required && <span className="ml-0.5 text-black">*</span>}
+          </span>
           <Input
             type={type}
             name={field.name}
@@ -86,7 +107,12 @@ export function TextField({
             aria-invalid={
               !field.state.meta.isValid && field.state.meta.isTouched
             }
-            className={cn("h-10", className)}
+            className={cn(
+              "h-10 rounded-sm border border-black bg-white text-black placeholder:text-neutral-400",
+              focusRing,
+              invalidState,
+              className,
+            )}
             {...props}
           />
         </div>
@@ -110,11 +136,8 @@ export function TextArea({
 
   return (
     <div>
-      <label
-        htmlFor={label}
-        className="block font-medium mb-1 text-sm font-roboto"
-      >
-        <span className="block mb-2 text-heading">{label}</span>
+      <label htmlFor={label} className="block text-sm mb-1">
+        <span className="mb-2 block text-black">{label}</span>
 
         <Textarea
           name={field.name}
@@ -122,45 +145,16 @@ export function TextArea({
           value={field.state.value}
           onBlur={field.handleBlur}
           onChange={(e) => field.handleChange(e.target.value)}
-          className={cn(className)}
+          className={cn(
+            "rounded-sm border border-black bg-white text-black placeholder:text-neutral-400",
+            focusRing,
+            invalidState,
+            className,
+          )}
           aria-invalid={!field.state.meta.isValid && field.state.meta.isTouched}
           {...props}
         />
       </label>
-      {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
-    </div>
-  );
-}
-
-export function Select({
-  label,
-  values,
-}: {
-  label: string;
-  values: Array<{ label: string; value: string }>;
-  placeholder?: string;
-}) {
-  const field = useFieldContext<string>();
-  const errors = useStore(field.store, (state) => state.meta.errors);
-
-  return (
-    <div>
-      <label htmlFor={label} className="block font-bold mb-1 text-xl">
-        {label}
-      </label>
-      <select
-        name={field.name}
-        value={field.state.value}
-        onBlur={field.handleBlur}
-        onChange={(e) => field.handleChange(e.target.value)}
-        className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-      >
-        {values.map((value) => (
-          <option key={value.value} value={value.value}>
-            {value.label}
-          </option>
-        ))}
-      </select>
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>
   );
@@ -179,31 +173,39 @@ export function SelectField({
 }) {
   const field = useFieldContext<string>();
   const errors = useStore(field.store, (state) => state.meta.errors);
+  const isInvalid = !field.state.meta.isValid && field.state.meta.isTouched;
 
   return (
     <div className="space-y-1">
-      <label htmlFor={label}>
-        <span className="block mb-2 text-sm font-medium text-stone-700">
-          {label}
-          {required && <span className="text-red-500 ml-0.5">*</span>}
-        </span>
-        <select
+      <span className="block mb-0 text-sm text-black">
+        {label}
+        {required && <span className="ml-0.5 text-black">*</span>}
+      </span>
+      <Select
+        name={field.name}
+        value={field.state.value}
+        onValueChange={(value) => field.handleChange(value)}
+        onOpenChange={(open) => !open && field.handleBlur()}
+      >
+        <SelectTrigger
           id={label}
-          name={field.name}
-          value={field.state.value}
-          onBlur={field.handleBlur}
-          onChange={(e) => field.handleChange(e.target.value)}
-          aria-invalid={!field.state.meta.isValid && field.state.meta.isTouched}
-          className="w-full h-10 px-3 rounded-md border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400 bg-white"
+          aria-invalid={isInvalid}
+          className={cn(
+            "h-10 w-full rounded-sm border border-black bg-white px-3 text-sm text-black focus:outline-none",
+            focusRing,
+            invalidState,
+          )}
         >
-          <option value="">{placeholder}</option>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent className="rounded-sm border-black bg-white text-black">
           {options.map((o) => (
-            <option key={o.value} value={o.value}>
+            <SelectItem key={o.value} value={o.value}>
               {o.label}
-            </option>
+            </SelectItem>
           ))}
-        </select>
-      </label>
+        </SelectContent>
+      </Select>
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>
   );
@@ -222,7 +224,7 @@ export function CheckboxField({
   return (
     <div className="space-y-1">
       <label
-        className={cn("flex items-center gap-2 cursor-pointer", className)}
+        className={cn("flex cursor-pointer items-center gap-2", className)}
       >
         <input
           type="checkbox"
@@ -230,9 +232,12 @@ export function CheckboxField({
           checked={field.state.value}
           onBlur={field.handleBlur}
           onChange={(e) => field.handleChange(e.target.checked)}
-          className="w-4 h-4 border-stone-300 rounded"
+          className={cn(
+            "h-4 w-4 rounded-sm border border-black text-black accent-black",
+            focusRing,
+          )}
         />
-        <span className="text-sm font-medium text-stone-700">{label}</span>
+        <span className="text-sm font-medium text-black">{label}</span>
       </label>
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>
