@@ -21,7 +21,6 @@ import { RegisterData, userRegisterSchema } from "@/schema/register.schema";
 import { ForgotPassword, forgotPasswordSchema } from "@/schema/reset.schema";
 import { UserRecord } from "firebase-admin/auth";
 import { Route } from "next";
-import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect, RedirectType } from "next/navigation";
 import { associateCartWithUser } from "../cart/cart-actions";
@@ -102,7 +101,6 @@ export async function registerCustomer(
     console.error("Cart merge warning:", cartAssoc.error);
   }
 
-  refresh();
   redirect("/", RedirectType.replace);
 }
 
@@ -147,8 +145,6 @@ export async function logIn(
 
     await associateCartWithUser(signIn.uid);
     await createUserSession(signIn.idToken, await cookies());
-
-    refresh();
   } catch (error) {
     console.error("Login error:", error);
     return { success: false, type: "server", message: SERVER_ERROR };

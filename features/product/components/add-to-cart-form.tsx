@@ -154,7 +154,7 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
           e.preventDefault();
           form.handleSubmit();
         }}
-        className="my-4 flex w-full gap-3"
+        className="my-4 flex flex-wrap w-full gap-3"
       >
         <form.Field name="quantity">
           {(field) => (

@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Separator as FormDivider } from "@/components/ui/separator";
 import { Address } from "@/entities/address";
 import {
   addAddress,
@@ -16,7 +17,6 @@ import { toast } from "sonner";
 import {
   ContactSection,
   DefaultToggleSection,
-  FormDivider,
   LabelSection,
   ShippingAddressSection,
 } from "./form-sections";

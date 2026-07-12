@@ -150,7 +150,3 @@ export function DefaultToggleSection({
     </form.AppField>
   );
 }
-
-export function FormDivider() {
-  return <div className="h-px w-full bg-neutral-200" aria-hidden="true" />;
-}

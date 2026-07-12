@@ -14,14 +14,16 @@ const ROUTES = {
 
 const isPathIn = (path: string, paths: string[]) => paths.includes(path);
 
-const redirectTo = (url: Route, request: NextRequest) => {
-  const response = NextResponse.redirect(new URL(url, request.url));
+const redirectTo = (url: URL | Route, request: NextRequest) => {
+  const response = NextResponse.redirect(
+    url instanceof URL ? url : new URL(url, request.url),
+  );
   response.cookies.delete(COOKIE_SESSION_KEY);
   return response;
 };
 
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
   const isPublicAccountPath = isPathIn(pathname, ROUTES.public.account);
   const isProtectedPath =
     pathname.startsWith("/account") && !isPublicAccountPath;
@@ -30,7 +32,9 @@ export async function proxy(request: NextRequest) {
 
   if (!user) {
     if (isProtectedPath) {
-      return redirectTo("/account/login", request);
+      const loginUrl = new URL("/account/login", request.url);
+      loginUrl.searchParams.set("redirectUrl", pathname + search);
+      return redirectTo(loginUrl, request);
     }
     return NextResponse.next();
   }
