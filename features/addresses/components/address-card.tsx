@@ -7,26 +7,74 @@ import {
   setDefaultAddress,
 } from "@/features/addresses/address-actions";
 import { openModal } from "@/store/modal";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
+function DotsPending({ label }: { label: string }) {
+  return (
+    <span
+      role="status"
+      aria-live="polite"
+      className="flex h-9 items-center gap-1 px-4"
+    >
+      <span className="sr-only">{label}</span>
+      <span
+        aria-hidden="true"
+        className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-400 [animation-delay:-0.3s]"
+      />
+      <span
+        aria-hidden="true"
+        className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-400 [animation-delay:-0.15s]"
+      />
+      <span
+        aria-hidden="true"
+        className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-400"
+      />
+    </span>
+  );
+}
+
 export function AddressCard({ address }: { address: Address }) {
-  const [isRemoving, startRemoveTransition] = useTransition();
-  const [isSettingDefault, startDefaultTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
+  const [pendingAction, setPendingAction] = useState<
+    "remove" | "default" | null
+  >(null);
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
 
   function handleRemove() {
-    startRemoveTransition(async () => {
+    if (!confirmingRemove) {
+      setConfirmingRemove(true);
+      return;
+    }
+    setPendingAction("remove");
+    startTransition(async () => {
       const result = await removeAddress(address.id);
-      if (!result.success) toast.error(result.error);
+      if (!result.success) {
+        toast.error(result.error);
+      } else {
+        toast.success(`${address.label} address removed`);
+      }
+      setPendingAction(null);
+      setConfirmingRemove(false);
     });
   }
 
   function handleSetDefault() {
-    startDefaultTransition(async () => {
+    setPendingAction("default");
+    startTransition(async () => {
       const result = await setDefaultAddress(address.id);
-      if (!result.success) toast.error(result.error);
+      if (!result.success) {
+        toast.error(result.error);
+      } else {
+        toast.success(`${address.label} set as default address`);
+      }
+      setPendingAction(null);
     });
   }
+
+  const cityLine =
+    [address.city, address.state].filter(Boolean).join(", ") +
+    (address.postalCode ? ` ${address.postalCode}` : "");
 
   return (
     <article
@@ -55,7 +103,6 @@ export function AddressCard({ address }: { address: Address }) {
               <span className="sr-only"> (default address)</span>
             )}
           </h3>
-
           <p className="mt-3 text-sm font-medium text-black">
             {address.recipientName}
             <span aria-hidden="true" className="mx-2 text-neutral-400">
@@ -74,8 +121,7 @@ export function AddressCard({ address }: { address: Address }) {
               </>
             )}
             <br />
-            {address.city}, {address.state}
-            {address.postalCode ? ` ${address.postalCode}` : ""}
+            {cityLine}
             <br />
             {address.country}
           </address>
@@ -83,38 +129,66 @@ export function AddressCard({ address }: { address: Address }) {
 
         <div
           role="group"
-          aria-label={`Actions for ${address.label} address`}
-          className="flex shrink-0 flex-row flex-wrap gap-2 sm:flex-col"
+          aria-label="Address actions"
+          className="flex shrink-0 flex-row flex-wrap gap-2 sm:flex-col sm:items-end"
         >
-          <Button onClick={() => openModal("address", address)}>
+          <Button
+            onClick={() => openModal("address", address)}
+            disabled={isPending}
+            className="sm:w-full"
+          >
             Edit
             <span className="sr-only"> {address.label} address</span>
           </Button>
 
-          {!address.isDefault && (
-            <button
-              type="button"
-              onClick={handleSetDefault}
-              disabled={isSettingDefault || isRemoving}
-              className="border border-transparent px-4 py-2 text-sm font-medium text-neutral-600 underline decoration-black decoration-2 underline-offset-4 transition-colors hover:text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:pointer-events-none disabled:opacity-50"
-            >
-              {isSettingDefault ? "Setting…" : "Set as default"}
-              <span className="sr-only"> for {address.label}</span>
-            </button>
-          )}
+          {!address.isDefault &&
+            (pendingAction === "default" ? (
+              <DotsPending label="Setting as default" />
+            ) : (
+              <button
+                type="button"
+                onClick={handleSetDefault}
+                disabled={isPending}
+                className="border border-transparent px-4 py-2 text-sm font-medium text-neutral-500 underline decoration-transparent decoration-2 underline-offset-4 transition-colors hover:text-black hover:decoration-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:pointer-events-none disabled:opacity-50"
+              >
+                Set as default
+                <span className="sr-only"> for {address.label}</span>
+              </button>
+            ))}
 
-          {!address.isDefault && (
-            <button
-              type="button"
-              onClick={handleRemove}
-              disabled={isRemoving || isSettingDefault}
-              aria-busy={isRemoving}
-              className="border border-transparent px-4 py-2 text-sm font-medium text-neutral-500 underline decoration-transparent decoration-2 underline-offset-4 transition-colors hover:text-black hover:decoration-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:pointer-events-none disabled:opacity-50"
-            >
-              {isRemoving ? "Removing…" : "Remove"}
-              <span className="sr-only"> {address.label} address</span>
-            </button>
-          )}
+          {!address.isDefault &&
+            (pendingAction === "remove" ? (
+              <DotsPending label="Removing address" />
+            ) : confirmingRemove ? (
+              <div className="flex flex-row gap-2 sm:flex-col">
+                <button
+                  type="button"
+                  onClick={handleRemove}
+                  disabled={isPending}
+                  className="border border-transparent px-4 py-2 text-sm font-medium text-red-600 underline decoration-red-600 decoration-2 underline-offset-4 transition-colors hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:pointer-events-none disabled:opacity-50"
+                >
+                  Confirm remove
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingRemove(false)}
+                  disabled={isPending}
+                  className="border border-transparent px-4 py-2 text-sm font-medium text-neutral-500 underline decoration-transparent decoration-2 underline-offset-4 transition-colors hover:text-black hover:decoration-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:pointer-events-none disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleRemove}
+                disabled={isPending}
+                className="border border-transparent px-4 py-2 text-sm font-medium text-neutral-500 underline decoration-transparent decoration-2 underline-offset-4 transition-colors hover:text-black hover:decoration-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:pointer-events-none disabled:opacity-50"
+              >
+                Remove
+                <span className="sr-only"> {address.label} address</span>
+              </button>
+            ))}
         </div>
       </div>
     </article>

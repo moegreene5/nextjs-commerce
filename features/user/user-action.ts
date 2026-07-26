@@ -6,7 +6,8 @@ import { AppError } from "@/lib/errors";
 import { auth, collections, store } from "@/lib/firebase/admin";
 import { signInWithEmailPassword } from "@/lib/firebase/sign-in";
 import { ProfileData, userProfileSchema } from "@/schema/register.schema";
-import { refresh } from "next/cache";
+import { Route } from "next";
+import { revalidatePath } from "next/cache";
 
 export async function updateUserProfile(
   data: ProfileData,
@@ -59,7 +60,7 @@ export async function updateUserProfile(
         updatedAt: new Date(),
       });
 
-    refresh();
+    revalidatePath("/account" as Route);
     return { success: true };
   } catch (err: unknown) {
     if (err instanceof AppError) {

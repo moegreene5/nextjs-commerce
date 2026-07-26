@@ -6,12 +6,15 @@ import {
   CartItem,
   CartItemDocument,
 } from "@/entities/cart";
-import { Profile } from "@/entities/user";
 import { computePriceChange } from "@/lib/cart";
 import { AppError } from "@/lib/errors";
 import { collections, store } from "@/lib/firebase/admin";
 import { normalizeProductDoc } from "@/lib/product";
-import { getCartId, getOrCreateCartId, setCartId } from "@/lib/session";
+import {
+  Cookies,
+  getOrCreateGuestSessionId,
+  getUserFromSession,
+} from "@/lib/session";
 import {
   AddToCartInput,
   addToCartSchema,
@@ -26,6 +29,7 @@ import {
   Timestamp,
 } from "firebase-admin/firestore";
 import { cookies } from "next/headers";
+import { getCartId } from "./cart-queries";
 
 const MAX_CART_ITEMS = 50;
 
@@ -40,6 +44,14 @@ export type RemoveFromCartResult =
 export type UpdateQuantityResult =
   | { success: true }
   | { success: false; error: string };
+
+async function getOrCreateCartId(cookies: Cookies): Promise<string> {
+  const session = await getUserFromSession(cookies, false);
+  if (session?.user.uid) return session.user.uid;
+
+  const guestId = getOrCreateGuestSessionId(cookies);
+  return guestId;
+}
 
 export async function addToCart(
   input: AddToCartInput,
@@ -56,7 +68,7 @@ export async function addToCart(
     const { productId, variantId, quantity } = result.data;
 
     const cookieStore = await cookies();
-    const cartId = getOrCreateCartId(cookieStore);
+    const cartId = await getOrCreateCartId(cookieStore);
 
     const cartRef = store.collection(collections.cart).doc(cartId);
     const cartItemRef = cartRef
@@ -197,7 +209,7 @@ export async function removeItemFromCart(
     const { variantId } = result.data;
 
     const cookieStore = await cookies();
-    const cartId = getCartId(cookieStore);
+    const cartId = await getCartId(cookieStore);
 
     if (!cartId) return { success: false, error: "Cart not found" };
 
@@ -253,7 +265,7 @@ export async function incrementOrDecreaseQuantity(
 
   try {
     const cookieStore = await cookies();
-    const cartId = getCartId(cookieStore);
+    const cartId = await getCartId(cookieStore);
 
     if (!cartId) return { success: false, error: "Cart not found." };
 
@@ -347,40 +359,17 @@ export type AssociateCartResult =
 
 export async function associateCartWithUser(
   userId: string,
+  guestCartId: string | null,
 ): Promise<AssociateCartResult> {
-  if (!userId?.trim()) return { status: "no_action" };
-
-  const cookieStore = await cookies();
-  const currentCartId = getCartId(cookieStore);
+  if (!userId?.trim() || !guestCartId || guestCartId === userId) {
+    return { status: "no_action" };
+  }
 
   try {
-    const userRef = store.collection(collections.profile).doc(userId);
-
-    const storedCartId = await store.runTransaction(async (transaction) => {
-      const userSnap = await transaction.get(userRef);
-      const user = userSnap.data() as Profile | undefined;
-      const existing: string | undefined = user?.cartId;
-
-      if (!existing && currentCartId) {
-        transaction.set(userRef, { cartId: currentCartId }, { merge: true });
-        return currentCartId;
-      }
-
-      return existing;
+    await mergeCartsIntoTarget({
+      sourceCartId: guestCartId,
+      targetCartId: userId,
     });
-
-    if (!storedCartId || storedCartId === currentCartId) {
-      return { status: "no_action" };
-    }
-
-    if (currentCartId) {
-      await mergeCartsIntoTarget({
-        sourceCartId: currentCartId,
-        targetCartId: storedCartId,
-      });
-    }
-
-    setCartId(storedCartId, cookieStore);
     return { status: "merged" };
   } catch (error) {
     console.error("associateCartWithUser error:", error);

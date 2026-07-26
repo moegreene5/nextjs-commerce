@@ -213,32 +213,43 @@ export async function createProduct(
 }
 
 export async function deleteProducts(ids: string[]) {
-  if (!Array.isArray(ids) || ids.length === 0) {
-    throw new Error("Array of product ids required");
+  try {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new Error("Array of product ids required");
+    }
+
+    await requireAuth({ role: "admin" });
+
+    const docs = await Promise.all(
+      ids.map((id) => store.collection(collections.products).doc(id).get()),
+    );
+
+    const batch = store.batch();
+    docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+
+    const allImageUrls = docs.flatMap((doc) =>
+      (doc.data()?.images ?? []).map((img: { url: string }) => img.url),
+    );
+    if (allImageUrls.length > 0) {
+      await Promise.allSettled(allImageUrls.map(deleteImage));
+    }
+
+    const hasFeatured = docs.some((doc) => doc.data()?.isFeatured);
+    const hasBestSeller = docs.some((doc) => doc.data()?.isBestSeller);
+
+    if (hasFeatured) updateTag(CACHE_TAGS.featuredProducts);
+    if (hasBestSeller) updateTag(CACHE_TAGS.bestSellers);
+
+    return { success: true, deleted: ids.length };
+  } catch (err) {
+    const error =
+      err instanceof AppError
+        ? err.message
+        : "Something went wrong. Please try again.";
+
+    return { success: false, error };
   }
-
-  const docs = await Promise.all(
-    ids.map((id) => store.collection(collections.products).doc(id).get()),
-  );
-
-  const batch = store.batch();
-  docs.forEach((doc) => batch.delete(doc.ref));
-  await batch.commit();
-
-  const allImageUrls = docs.flatMap((doc) =>
-    (doc.data()?.images ?? []).map((img: { url: string }) => img.url),
-  );
-  if (allImageUrls.length > 0) {
-    await Promise.allSettled(allImageUrls.map(deleteImage));
-  }
-
-  const hasFeatured = docs.some((doc) => doc.data()?.isFeatured);
-  const hasBestSeller = docs.some((doc) => doc.data()?.isBestSeller);
-
-  if (hasFeatured) updateTag(CACHE_TAGS.featuredProducts);
-  if (hasBestSeller) updateTag(CACHE_TAGS.bestSellers);
-
-  return { deleted: ids.length };
 }
 
 export async function getProductAction(filters: ProductFilters) {

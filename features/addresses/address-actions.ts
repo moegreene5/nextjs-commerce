@@ -179,29 +179,14 @@ export async function removeAddress(addressId: string): Promise<SimpleResult> {
       unauthenticatedMessage: "Sign in to remove an address",
     });
 
-    const ref = store.collection(collections.addresses);
+    const ref = store.collection(collections.addresses).doc(addressId);
+    const doc = await ref.get();
 
-    await store.runTransaction(async (tx) => {
-      const docRef = ref.doc(addressId);
-      const otherAddressesQuery = ref.where("userId", "==", uid).limit(2);
+    if (!doc.exists || doc.data()?.userId !== uid) {
+      throw new AppError("Address not found", "NOT_FOUND");
+    }
 
-      const [doc, othersSnap] = await Promise.all([
-        tx.get(docRef),
-        tx.get(otherAddressesQuery),
-      ]);
-
-      if (!doc.exists || doc.data()?.userId !== uid) {
-        throw new AppError("Address not found", "NOT_FOUND");
-      }
-
-      const wasDefault = doc.data()?.isDefault;
-      tx.delete(docRef);
-
-      if (wasDefault) {
-        const nextDefault = othersSnap.docs.find((d) => d.id !== addressId);
-        if (nextDefault) tx.update(nextDefault.ref, { isDefault: true });
-      }
-    });
+    await ref.delete();
 
     revalidatePath("/account/addresses" as Route);
     return { success: true };

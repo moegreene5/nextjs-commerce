@@ -5,7 +5,7 @@ import { auth } from "./firebase/admin";
 
 const SESSION_EXPIRATION_SECONDS = 7 * 60 * 60 * 24;
 export const COOKIE_SESSION_KEY = "app-session";
-export const COOKIE_CART_ID_KEY = "cart-id";
+export const GUEST_USER_ID = "app-guest-session";
 
 export type Cookies = {
   set: (
@@ -83,32 +83,22 @@ export async function deleteUserSession(cookies: Pick<Cookies, "delete">) {
   cookies.delete(COOKIE_SESSION_KEY);
 }
 
-export const getOrCreateCartId = (cookies: Cookies): string => {
-  const existing = cookies.get(COOKIE_CART_ID_KEY)?.value;
-  if (existing) return existing;
+export function getOrCreateGuestSessionId(cookies: Cookies): string {
+  const existingGuest = cookies.get(GUEST_USER_ID)?.value;
+  if (existingGuest) return existingGuest;
 
-  const cartId = randomUUID();
-  cookies.set(COOKIE_CART_ID_KEY, cartId, {
+  const guestId = randomUUID();
+  cookies.set(GUEST_USER_ID, guestId, {
     sameSite: "lax",
     httpOnly: true,
     secure: true,
-    maxAge: 60 * 60 * 24 * 30,
     path: "/",
+    maxAge: 60 * 60 * 24 * 30,
   });
 
-  return cartId;
-};
+  return guestId;
+}
 
-export const getCartId = (cookies: Pick<Cookies, "get">): string | null => {
-  return cookies.get(COOKIE_CART_ID_KEY)?.value ?? null;
-};
-
-export const setCartId = (cartId: string, cookies: Cookies): void => {
-  cookies.set(COOKIE_CART_ID_KEY, cartId, {
-    sameSite: "lax",
-    httpOnly: true,
-    secure: true,
-    maxAge: 60 * 60 * 24 * 30,
-    path: "/",
-  });
-};
+export function getGuestId(cookies: Cookies): string | null {
+  return cookies.get(GUEST_USER_ID)?.value ?? null;
+}

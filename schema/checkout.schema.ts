@@ -1,19 +1,23 @@
 import { z } from "zod";
+import { countryCodes } from "@/lib/countries";
 
-export const checkoutSchema = z.object({
-  email: z.string().email("Enter a valid email address"),
-  phone: z.string().regex(/^[\+\d\s\-\(\)]+$/, "Enter a valid phone number"),
-
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  country: z.string().min(1, "Country is required"),
-  address: z.string().min(5, "Enter your full street address"),
-  address2: z.string().default(""),
-  city: z.string().min(1, "City is required"),
-  state: z.string().default(""),
-  postalCode: z.string().default(""),
-
-  shippingMethod: z.enum(["standard", "express", "free"]).default("standard"),
+export const checkoutShippingAddressSchema = z.object({
+  recipientName: z.string().min(1, "Enter the recipient's full name"),
+  phone: z.string().min(7, "Enter a valid phone number"),
+  line1: z.string().min(1, "Enter a street address"),
+  line2: z.string().max(200, "That looks too long — check for a typo"),
+  city: z.string().min(1, "Enter a city"),
+  state: z.string().min(1, "Enter a state or province"),
+  postalCode: z.string(),
+  country: z.string().refine((c) => countryCodes.has(c), {
+    message: "Select a country from the list",
+  }),
 });
 
-export type CheckoutFormValues = z.infer<typeof checkoutSchema>;
+export const createOrderSchema = z.object({
+  email: z.string().email("Enter a valid email address"),
+  shippingAddress: checkoutShippingAddressSchema,
+  saveAddress: z.boolean().default(false),
+});
+
+export type CreateOrderInput = z.infer<typeof createOrderSchema>;

@@ -1,6 +1,5 @@
 import { Timestamp } from "firebase-admin/firestore";
 
-// ── Shared sub-types ──────────────────────────────────────
 
 export type OrderStatus =
   | "pending"
@@ -24,19 +23,16 @@ export interface OrderStatusEvent {
 }
 
 export interface OrderLineItem {
-  // References — best-effort, may point to nothing if product/variant later removed
   productId: string;
   variantId: string;
-
-  // Snapshot — frozen at checkout, always valid regardless of product's current state
   name: string;
-  slug: string; // for "view product" link attempt; may 404
+  slug: string;
   image: string;
   size: string;
-  sku: string;
-  unitPrice: number; // price actually paid, not current price
+  sku?: string;
+  unitPrice: number; 
   quantity: number;
-  lineTotal: number; // unitPrice * quantity, computed once at checkout
+  lineTotal: number; 
 }
 
 export interface Address {
@@ -70,10 +66,8 @@ export interface PaymentInfo {
   refundedAmount?: number;
 }
 
-// ── Main order document ───────────────────────────────────
 
 export interface OrderDocument {
-  // Identity
   orderNumber: string; // human-facing, e.g. "ORD-2026-00123"
   userId: string | null; // null for guest checkout
   guestEmail?: string; // required if userId is null

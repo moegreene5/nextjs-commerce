@@ -9,6 +9,7 @@ import { SetStateAction } from "react";
 import { toast } from "sonner";
 import { updateUserProfile } from "../user-action";
 import { Views } from "./user-account-information";
+import { cn } from "@/utils/cn";
 
 const FORM_ID = "edit-user-profile-form";
 
@@ -71,6 +72,25 @@ export function EditUserProfile({ profile, setView }: UserProfileProps) {
         className="space-y-6"
       >
         <div className="grid md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label htmlFor="email" className="text-sm font-medium">
+              Email
+            </label>
+            <Input
+              id="email"
+              type="email"
+              value={profile?.email || ""}
+              disabled
+              className="h-10"
+            />
+          </div>
+
+          <form.AppField name="username">
+            {(field) => (
+              <field.TextField label="Username" required type="text" />
+            )}
+          </form.AppField>
+
           <form.AppField name="firstName">
             {(field) => (
               <field.TextField label="First Name" required type="text" />
@@ -82,22 +102,6 @@ export function EditUserProfile({ profile, setView }: UserProfileProps) {
               <field.TextField label="Last Name" required type="text" />
             )}
           </form.AppField>
-
-          <form.AppField name="username">
-            {(field) => (
-              <field.TextField label="Username" required type="text" />
-            )}
-          </form.AppField>
-
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Email</label>
-            <Input
-              type="email"
-              value={profile?.email || ""}
-              disabled
-              className="h-10"
-            />
-          </div>
 
           <form.AppField name="phoneNumber">
             {(field) => (
@@ -141,7 +145,9 @@ export function EditUserProfile({ profile, setView }: UserProfileProps) {
           <div className="col-span-full flex gap-2.5 md:gap-4">
             <Button
               type="button"
-              className="bg-gray-200 text-black hover:bg-[#897f7b]"
+              className={cn(
+                "h-11 rounded-sm bg-gray-200 text-black hover:bg-[#897f7b] uppercase",
+              )}
               onClick={() => setView("view")}
             >
               Cancel

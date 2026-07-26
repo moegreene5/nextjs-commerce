@@ -44,7 +44,7 @@ const ViewInformation = ({
   return (
     <div>
       <div className="flex mb-4 gap-4 flex-wrap justify-between text-sm">
-        <h3 className="uppercase">Your Personal Information</h3>
+        <h1 className="uppercase">Your Personal Information</h1>
         <div className="flex gap-1 items-center">
           <Button variant={"ghost"} onClick={handleEdit}>
             Edit
@@ -80,7 +80,7 @@ const InfoField = ({
   capitalize?: boolean;
 }) => (
   <div>
-    <h6 className="uppercase mb-1.5">{label}</h6>
+    <h2 className="uppercase mb-1.5">{label}</h2>
     <p className={capitalize ? "capitalize" : ""}>{value}</p>
   </div>
 );
@@ -93,7 +93,7 @@ const EditProfile = ({
   user: Profile | null;
 }) => (
   <div className="text-sm">
-    <h3 className="uppercase mb-4">Edit Your Personal Information</h3>
+    <h1 className="uppercase mb-4">Edit Your Personal Information</h1>
     <EditUserProfile profile={user} setView={setView} />
   </div>
 );

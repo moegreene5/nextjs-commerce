@@ -38,6 +38,7 @@ export type CartItem = {
   slug: string;
   name: string;
   image: string;
+  sku?: string;
   quantity: number;
   priceAtAdded: number;
   currentPrice: number;

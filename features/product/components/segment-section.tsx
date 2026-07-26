@@ -46,6 +46,7 @@ export default function SegmentSection({
       </div>
 
       <Carousel
+        aria-label={`${title} carousel`}
         opts={{
           skipSnaps: true,
           containScroll: "trimSnaps",

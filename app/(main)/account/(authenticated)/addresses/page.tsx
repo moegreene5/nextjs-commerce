@@ -45,6 +45,7 @@ async function AddressList() {
 function AddressListSkeleton() {
   return (
     <div className="space-y-4" aria-busy="true" aria-label="Loading addresses">
+      <Skeleton className="mt-2 h-10 w-40 rounded-lg bg-gray-200" />
       {[0, 1, 2].map((i) => (
         <div
           key={i}
@@ -67,7 +68,6 @@ function AddressListSkeleton() {
           </div>
         </div>
       ))}
-      <Skeleton className="mt-2 h-10 w-40 rounded-lg bg-gray-200" />
     </div>
   );
 }

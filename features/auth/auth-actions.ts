@@ -11,7 +11,11 @@ import { AppError } from "@/lib/errors";
 import { auth, collections, store } from "@/lib/firebase/admin";
 import { signInWithEmailPassword } from "@/lib/firebase/sign-in";
 import { sendEmail } from "@/lib/mail";
-import { createUserSession, deleteUserSession } from "@/lib/session";
+import {
+  createUserSession,
+  deleteUserSession,
+  getGuestId,
+} from "@/lib/session";
 import {
   ChangePasswordInput,
   changePasswordSchema,
@@ -27,6 +31,7 @@ import { associateCartWithUser } from "../cart/cart-actions";
 
 export async function registerCustomer(
   data: RegisterData,
+  redirectUrl?: Route,
 ): Promise<ActionResult> {
   const parsed = userRegisterSchema.safeParse(data);
 
@@ -34,7 +39,7 @@ export async function registerCustomer(
     return {
       success: false,
       type: "validation",
-      fields: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+      fields: parsed.error.flatten().fieldErrors,
     };
   }
 
@@ -95,13 +100,17 @@ export async function registerCustomer(
     redirect("/account/login?reason=registered", RedirectType.replace);
   }
 
-  await createUserSession(signInResult.idToken, await cookies());
-  const cartAssoc = await associateCartWithUser(signInResult.uid);
+  const cookieStore = await cookies();
+  const guestId = getGuestId(cookieStore);
+
+  await createUserSession(signInResult.idToken, cookieStore);
+
+  const cartAssoc = await associateCartWithUser(signInResult.uid, guestId);
   if (cartAssoc.status === "error") {
     console.error("Cart merge warning:", cartAssoc.error);
   }
 
-  redirect("/", RedirectType.replace);
+  redirect((redirectUrl || "/account") as Route, RedirectType.replace);
 }
 
 export async function logIn(
@@ -114,7 +123,7 @@ export async function logIn(
     return {
       success: false,
       type: "validation",
-      fields: loginData.error.flatten().fieldErrors as Record<string, string[]>,
+      fields: loginData.error.flatten().fieldErrors,
     };
   }
 
@@ -143,14 +152,21 @@ export async function logIn(
       };
     }
 
-    await associateCartWithUser(signIn.uid);
-    await createUserSession(signIn.idToken, await cookies());
+    const cookieStore = await cookies();
+    const guestId = getGuestId(cookieStore);
+
+    const cartAssoc = await associateCartWithUser(signIn.uid, guestId);
+    if (cartAssoc.status === "error") {
+      console.error("Cart merge warning:", cartAssoc.error);
+    }
+
+    await createUserSession(signIn.idToken, cookieStore);
   } catch (error) {
     console.error("Login error:", error);
     return { success: false, type: "server", message: SERVER_ERROR };
   }
 
-  redirect((redirectUrl || "/") as Route, RedirectType.replace);
+  redirect((redirectUrl || "/account") as Route, RedirectType.replace);
 }
 
 export async function logOut() {

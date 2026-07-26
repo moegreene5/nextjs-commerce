@@ -1,16 +1,17 @@
 import "server-only";
 
 import { Address, AddressDocument, toAddress } from "@/entities/address";
-import { requireAuth } from "@/lib/auth";
 import { collections, store } from "@/lib/firebase/admin";
-import { redirect } from "next/navigation";
+import { getCurrentUser } from "../user/user-queries";
 
 export async function getAddresses(): Promise<Address[]> {
-  const { uid } = await requireAuth({
-    unauthenticatedMessage: "Sign in to view your addresses",
-  }).catch(() => {
-    redirect("/account/login?reason=addresses");
-  });
+  const session = await getCurrentUser();
+
+  const uid = session?.user?.uid;
+
+  if (!uid) {
+    return [];
+  }
 
   const snap = await store
     .collection(collections.addresses)

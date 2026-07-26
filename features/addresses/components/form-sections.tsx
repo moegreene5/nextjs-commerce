@@ -22,10 +22,10 @@ export function LabelSection({ form }: { form: AppFormApi<AddAddressInput> }) {
   );
 }
 
-export function ContactSection({
+export function ContactSection<T extends Partial<AddAddressInput>>({
   form,
 }: {
-  form: AppFormApi<AddAddressInput>;
+  form: AppFormApi<T>;
 }) {
   return (
     <div>
@@ -59,10 +59,10 @@ export function ContactSection({
   );
 }
 
-export function ShippingAddressSection({
+export function ShippingAddressSection<T extends Partial<AddAddressInput>>({
   form,
 }: {
-  form: AppFormApi<AddAddressInput>;
+  form: AppFormApi<T>;
 }) {
   return (
     <div>

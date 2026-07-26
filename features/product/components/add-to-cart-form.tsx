@@ -69,23 +69,34 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
       form.setFieldValue("quantity", "" as QuantityValue);
       return;
     }
+
     const parsed = parseInt(raw, 10);
     if (isNaN(parsed)) return;
+
     if (parsed < 1) {
       form.setFieldValue("quantity", 1);
       return;
     }
-    if (parsed > quantityInStore) {
-      form.setFieldValue("quantity", quantityInStore);
-      return;
-    }
+
     form.setFieldValue("quantity", parsed);
   };
 
   const handleInputBlur = (raw: string) => {
     const parsed = parseInt(raw, 10);
+
     if (isNaN(parsed) || parsed < 1) {
       form.setFieldValue("quantity", 1);
+      return;
+    }
+
+    if (parsed > quantityInStore) {
+      toast.error(
+        `Only ${quantityInStore} item${
+          quantityInStore === 1 ? "" : "s"
+        } left in stock`,
+      );
+      form.setFieldValue("quantity", quantityInStore);
+      return;
     }
   };
 
@@ -172,7 +183,6 @@ const AddToCartForm = ({ product }: AddToCartFormProps) => {
 
               <Input
                 type="number"
-                id="quantity"
                 aria-label="Product quantity"
                 className="w-12 text-center border-none shadow-none focus-visible:ring-1 focus-visible:ring-blue-300 rounded-sm p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 value={field.state.value}

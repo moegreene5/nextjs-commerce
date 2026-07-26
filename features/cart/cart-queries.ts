@@ -4,14 +4,27 @@ import { CartItem, GetCartResult } from "@/entities/cart";
 import { computePriceChange, createEmptyCart } from "@/lib/cart";
 import { collections, store } from "@/lib/firebase/admin";
 import { normalizeProductDoc } from "@/lib/product";
-import { getCartId } from "@/lib/session";
+import { Cookies, getGuestId, getUserFromSession } from "@/lib/session";
 import { cookies } from "next/headers";
 import { cache } from "react";
 
+export async function getCartId(cookies: Cookies): Promise<string | null> {
+  const session = await getUserFromSession(cookies, false);
+  if (session?.user.uid) return session.user.uid;
+
+  return getGuestId(cookies);
+}
+
 export const getCart = cache(async (): Promise<GetCartResult> => {
   const cookieStore = await cookies();
-  const cartId = getCartId(cookieStore);
+  const cartId = await getCartId(cookieStore);
 
+  return getCartById(cartId);
+});
+
+export async function getCartById(
+  cartId: string | null,
+): Promise<GetCartResult> {
   if (!cartId) return { success: true, cart: createEmptyCart("") };
 
   try {
@@ -59,6 +72,7 @@ export const getCart = cache(async (): Promise<GetCartResult> => {
         variantId: d.variantId,
         size: d.size ?? variant?.size ?? "",
         slug: product.slug,
+        sku: variant?.sku,
         name: product.name,
         image: product.images[0]?.url ?? "",
         quantity: d.quantity,
@@ -104,4 +118,4 @@ export const getCart = cache(async (): Promise<GetCartResult> => {
     console.error("getCart error:", error);
     return { success: false, error: "Failed to get cart" };
   }
-});
+}
