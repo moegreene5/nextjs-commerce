@@ -81,6 +81,7 @@ export function TextField({
   className,
   type,
   required,
+  id,
   ...props
 }: {
   label: string;
@@ -88,35 +89,31 @@ export function TextField({
 } & React.ComponentProps<"input">) {
   const field = useFieldContext<string>();
   const errors = useStore(field.store, (state) => state.meta.errors);
+  const inputId = id || label;
 
   return (
     <div className="space-y-1">
-      <label htmlFor={label}>
-        <div className="space-y-2">
-          <span className="text-sm text-black">
-            {label}
-            {required && <span className="ml-0.5 text-black">*</span>}
-          </span>
-          <Input
-            type={type}
-            name={field.name}
-            value={field.state.value}
-            placeholder={placeholder}
-            onBlur={field.handleBlur}
-            onChange={(e) => field.handleChange(e.target.value)}
-            aria-invalid={
-              !field.state.meta.isValid && field.state.meta.isTouched
-            }
-            className={cn(
-              "h-10 rounded-sm border border-black bg-white text-black placeholder:text-neutral-400",
-              focusRing,
-              invalidState,
-              className,
-            )}
-            {...props}
-          />
-        </div>
+      <label htmlFor={inputId} className="block text-sm text-black">
+        {label}
+        {required && <span className="ml-0.5 text-black">*</span>}
       </label>
+      <Input
+        id={inputId}
+        type={type}
+        name={field.name}
+        value={field.state.value}
+        placeholder={placeholder}
+        onBlur={field.handleBlur}
+        onChange={(e) => field.handleChange(e.target.value)}
+        aria-invalid={!field.state.meta.isValid && field.state.meta.isTouched}
+        className={cn(
+          "h-10 rounded-sm border border-black bg-white text-black placeholder:text-neutral-400",
+          focusRing,
+          invalidState,
+          className,
+        )}
+        {...props}
+      />
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>
   );
@@ -126,6 +123,7 @@ export function TextArea({
   label,
   rows = 4,
   className,
+  id,
   ...props
 }: {
   label: string;
@@ -133,28 +131,29 @@ export function TextArea({
 } & React.ComponentProps<"textarea">) {
   const field = useFieldContext<string>();
   const errors = useStore(field.store, (state) => state.meta.errors);
+  const textareaId = id || label;
 
   return (
-    <div>
-      <label htmlFor={label} className="block text-sm mb-1">
-        <span className="mb-2 block text-black">{label}</span>
-
-        <Textarea
-          name={field.name}
-          rows={rows}
-          value={field.state.value}
-          onBlur={field.handleBlur}
-          onChange={(e) => field.handleChange(e.target.value)}
-          className={cn(
-            "rounded-sm border border-black bg-white text-black placeholder:text-neutral-400",
-            focusRing,
-            invalidState,
-            className,
-          )}
-          aria-invalid={!field.state.meta.isValid && field.state.meta.isTouched}
-          {...props}
-        />
+    <div className="space-y-1">
+      <label htmlFor={textareaId} className="block text-sm text-black">
+        {label}
       </label>
+      <Textarea
+        id={textareaId}
+        name={field.name}
+        rows={rows}
+        value={field.state.value}
+        onBlur={field.handleBlur}
+        onChange={(e) => field.handleChange(e.target.value)}
+        className={cn(
+          "rounded-sm border border-black bg-white text-black placeholder:text-neutral-400",
+          focusRing,
+          invalidState,
+          className,
+        )}
+        aria-invalid={!field.state.meta.isValid && field.state.meta.isTouched}
+        {...props}
+      />
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>
   );
@@ -177,10 +176,10 @@ export function SelectField({
 
   return (
     <div className="space-y-1">
-      <span className="block mb-0 text-sm text-black">
+      <label htmlFor={label} className="block mb-0 text-sm text-black">
         {label}
         {required && <span className="ml-0.5 text-black">*</span>}
-      </span>
+      </label>
       <Select
         name={field.name}
         value={field.state.value}
@@ -190,6 +189,7 @@ export function SelectField({
         <SelectTrigger
           id={label}
           aria-invalid={isInvalid}
+          aria-label={label}
           className={cn(
             "h-10 w-full rounded-sm border border-black bg-white px-3 text-sm text-black focus:outline-none",
             focusRing,

@@ -94,7 +94,7 @@ export function AddressCard({ address }: { address: Address }) {
 
       <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h3
+          <h2
             id={`address-label-${address.id}`}
             className="mt-1 text-lg font-semibold text-black"
           >
@@ -102,7 +102,7 @@ export function AddressCard({ address }: { address: Address }) {
             {address.isDefault && (
               <span className="sr-only"> (default address)</span>
             )}
-          </h3>
+          </h2>
           <p className="mt-3 text-sm font-medium text-black">
             {address.recipientName}
             <span aria-hidden="true" className="mx-2 text-neutral-400">

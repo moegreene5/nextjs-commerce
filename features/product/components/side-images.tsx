@@ -35,6 +35,7 @@ export const SideImages = ({
       <Carousel
         className="my-4 md:my-0 md:sticky md:top-18"
         orientation="vertical"
+        aria-label="Product image thumbnails"
         setApi={setThumbsApi}
         opts={{
           skipSnaps: true,
@@ -44,12 +45,21 @@ export const SideImages = ({
         <CarouselContent className="mt-0 w-full flex-row md:flex-col justify-center gap-4">
           {images.map((image, index) => (
             <div
+              role="button"
+              tabIndex={0}
+              aria-label={`View product image ${index + 1}`}
               className={cn(
-                "cursor-pointer",
+                "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-black",
                 index === current && "border-2 border-black rounded-lg",
               )}
               key={"thumbnail_" + image.url + index}
               onClick={() => onThumbClick(index)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onThumbClick(index);
+                }
+              }}
             >
               <Image
                 alt={`Product image ${index + 1}`}

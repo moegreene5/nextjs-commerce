@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 
 import { CartItem, GetCartResult } from "@/entities/cart";
 import { computePriceChange, createEmptyCart } from "@/lib/cart";

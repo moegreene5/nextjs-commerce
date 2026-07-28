@@ -2,7 +2,6 @@ import CartBadge from "@/features/cart/components/cart-badge";
 import UserProfile, {
   UserProfileSkeleton,
 } from "@/features/user/components/user-profile";
-import { ShoppingCart } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -28,9 +27,8 @@ export default function Header() {
         <Suspense fallback={<UserProfileSkeleton />}>
           {<UserProfile />}
         </Suspense>
-        <Suspense fallback={<ShoppingCart className="size-5" />}>
-          <CartBadge />
-        </Suspense>
+
+        <CartBadge />
 
         <div className="relative">
           <ProductAddedAlert />

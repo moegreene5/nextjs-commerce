@@ -29,9 +29,19 @@ import {
   Timestamp,
 } from "firebase-admin/firestore";
 import { cookies } from "next/headers";
-import { getCartId } from "./cart-queries";
+import { getCart, getCartId } from "./cart-queries";
 
 const MAX_CART_ITEMS = 50;
+
+export async function fetchCartAction() {
+  const result = await getCart();
+
+  if (!result.success) {
+    throw new Error(result.error || "Failed to fetch cart on server");
+  }
+
+  return result.cart;
+}
 
 export type AddToCartResult =
   | { success: true; cartId: string; item: CartItem }
@@ -95,7 +105,7 @@ export async function addToCart(
 
       const isNewUniqueItem = !cartItemSnap.exists;
       const currentTotalItems = cartSnap.exists
-        ? (cartSnap.data()?.totalItems ?? 0)
+        ? cartSnap.data()?.totalItems ?? 0
         : 0;
 
       if (isNewUniqueItem && currentTotalItems >= MAX_CART_ITEMS) {
@@ -106,7 +116,7 @@ export async function addToCart(
       }
 
       const currentQtyInCart = cartItemSnap.exists
-        ? (cartItemSnap.data()?.quantity ?? 0)
+        ? cartItemSnap.data()?.quantity ?? 0
         : 0;
       const requestedTotal = currentQtyInCart + quantity;
 

@@ -75,5 +75,10 @@ export const userRegisterSchema = z.object({
 
 export type RegisterData = z.infer<typeof userRegisterSchema>;
 
-export const userProfileSchema = userRegisterSchema.omit({ email: true });
+export const userProfileSchema = userRegisterSchema
+  .omit({ email: true, password: true })
+  .extend({
+    password: z.string().min(1, "Password is required"),
+  });
+
 export type ProfileData = z.infer<typeof userProfileSchema>;

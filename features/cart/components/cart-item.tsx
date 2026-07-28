@@ -10,18 +10,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRemoveFromCart, useUpdateQuantity } from "../mutations";
 
-interface CartItemProps extends Pick<
-  CartItem,
-  | "slug"
-  | "productId"
-  | "variantId"
-  | "name"
-  | "size"
-  | "image"
-  | "quantity"
-  | "priceChange"
-  | "currentPrice"
-> {
+interface CartItemProps
+  extends Pick<
+    CartItem,
+    | "slug"
+    | "productId"
+    | "variantId"
+    | "name"
+    | "size"
+    | "image"
+    | "quantity"
+    | "priceChange"
+    | "currentPrice"
+  > {
   isCartPage?: boolean;
 }
 
@@ -87,7 +88,7 @@ export default function CartItemCard({
             >
               {name}
             </Link>
-            <span className="text-[10px] text-stone-400 uppercase tracking-widest font-geologica">
+            <span className="text-[10px] text-stone-500 uppercase tracking-widest font-geologica">
               {size}
             </span>
           </div>

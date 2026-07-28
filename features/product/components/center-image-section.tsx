@@ -31,6 +31,7 @@ export const CenterSection = ({
           opts={{ loop: true }}
           className="[&>div]:rounded-lg"
           setApi={setApi}
+          aria-label="Product image gallery"
         >
           <CarouselContent
             className={cn("rounded-lg", hasOnlyOneImage ? "ml-0" : "")}

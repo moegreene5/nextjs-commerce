@@ -46,7 +46,7 @@ export default function AccountNav({ links, showLogout = false }: Props) {
                 >
                   {label}
                   <span
-                    className={`absolute -bottom-px left-0 h-0.5 bg-black transition-all duration-300 ${
+                    className={`absolute -bottom-px left-0 h-2 bg-black transition-all duration-300 ${
                       isActive ? "w-full" : "w-0"
                     }`}
                   />

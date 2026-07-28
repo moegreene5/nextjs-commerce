@@ -51,7 +51,7 @@ export const hasSession = async (cookies: Pick<Cookies, "get">) => {
 };
 
 export const getUserFromSession = async (
-  cookies: Pick<Cookies, "get" | "delete">,
+  cookies: Pick<Cookies, "get">,
   checkRevoked: boolean = true,
 ) => {
   const sessionId = cookies.get(COOKIE_SESSION_KEY)?.value;
@@ -99,6 +99,6 @@ export function getOrCreateGuestSessionId(cookies: Cookies): string {
   return guestId;
 }
 
-export function getGuestId(cookies: Cookies): string | null {
+export function getGuestId(cookies: Pick<Cookies, "get">): string | null {
   return cookies.get(GUEST_USER_ID)?.value ?? null;
 }

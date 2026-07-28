@@ -7,11 +7,15 @@ import FreeShippingProgress from "@/features/cart/components/free-shipping-thres
 import { cartQueryOptions } from "@/features/cart/queries";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
 import { formatPrice } from "@/utils/format-price";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
 function CartData() {
-  const { data: cart } = useSuspenseQuery(cartQueryOptions());
+  const { data: cart, isPending, error } = useQuery(cartQueryOptions());
+
+  if (isPending) return <CartPageSkeleton />;
+
+  if (error) return <CartErrorState />;
 
   if (cart.items.length === 0) {
     return (

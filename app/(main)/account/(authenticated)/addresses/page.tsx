@@ -7,6 +7,7 @@ import { Suspense } from "react";
 export default function AddressesPage() {
   return (
     <div>
+      <h1 className="text-2xl font-semibold mb-6">Your Addresses</h1>
       <Suspense fallback={<AddressListSkeleton />}>
         <AddressList />
       </Suspense>
@@ -45,7 +46,7 @@ async function AddressList() {
 function AddressListSkeleton() {
   return (
     <div className="space-y-4" aria-busy="true" aria-label="Loading addresses">
-      <Skeleton className="mt-2 h-10 w-40 rounded-lg bg-gray-200" />
+      <Skeleton className="mt-2 h-10 w-40 rounded-lg bg-gray-200 ml-auto" />
       {[0, 1, 2].map((i) => (
         <div
           key={i}

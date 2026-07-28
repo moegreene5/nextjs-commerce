@@ -34,7 +34,7 @@ export default async function OrderSummary() {
         <div className="flex items-center justify-between">
           <span className="text-stone-600">
             Subtotal{" "}
-            <span className="text-stone-400">({cart.totalQuantity})</span>
+            <span className="text-stone-500">({cart.totalQuantity})</span>
           </span>
           <span className="tabular-nums font-medium text-stone-800">
             {formatPrice(cart.subtotal)}

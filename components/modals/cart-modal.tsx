@@ -16,13 +16,11 @@ import {
 } from "../ui/sheet";
 
 export default function CartSheet() {
-  console.log(Intl.supportedValuesOf("currency"));
-
   const isCartOpen = useModalStore((s) => !!s.modals["cart"]);
-  const data = useQuery(cartQueryOptions());
-  const cart = data?.data;
+  const { data: cart, isPending } = useQuery(cartQueryOptions());
+
   const items = cart?.items ?? [];
-  const isEmpty = items.length === 0;
+  const isEmpty = !isPending && items.length === 0;
   const isFree = (cart?.subtotal ?? 0) >= FREE_SHIPPING_THRESHOLD;
 
   return (
@@ -46,8 +44,11 @@ export default function CartSheet() {
             </SheetDescription>
             <FreeShippingProgress subtotal={cart?.subtotal ?? 0} />
           </SheetHeader>
+
           <div className="flex-1 overflow-y-auto px-page">
-            {isEmpty ? (
+            {isPending ? (
+              <CartSheetSkeleton />
+            ) : isEmpty ? (
               <div className="flex flex-col items-center justify-center h-full gap-6 py-16 text-center px-8">
                 <div className="relative">
                   <div className="w-20 h-20 rounded-full bg-stone-50 flex items-center justify-center">
@@ -115,7 +116,7 @@ export default function CartSheet() {
               <div className="space-y-2 font-geologica">
                 <div className="flex items-center justify-between text-xs text-primary font-semibold md:text-sm">
                   <span>
-                    Total ({cart?.totalQuantity}{" "}
+                    Total ({cart?.totalQuantity ?? 0}{" "}
                     {cart?.totalQuantity === 1 ? "item" : "items"})
                   </span>
                   <span>
@@ -133,6 +134,7 @@ export default function CartSheet() {
               </div>
 
               <Button
+                disabled={isPending}
                 className="w-full rounded-full h-12 uppercase tracking-widest text-xs font-semibold border border-primary"
                 asChild
               >
@@ -158,5 +160,27 @@ export default function CartSheet() {
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function CartSheetSkeleton() {
+  return (
+    <div className="py-2 space-y-4 animate-pulse">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="flex gap-3 py-4 border-b border-stone-100">
+          <div className="h-33 w-26.5 bg-stone-100 rounded-md shrink-0" />
+          <div className="flex flex-1 flex-col justify-between py-1">
+            <div className="space-y-2">
+              <div className="h-4 bg-stone-100 rounded w-3/4" />
+              <div className="h-3 bg-stone-100 rounded w-1/4" />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="h-4 bg-stone-100 rounded w-16" />
+              <div className="h-7 bg-stone-100 rounded-full w-20" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

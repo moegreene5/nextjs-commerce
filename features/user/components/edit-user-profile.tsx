@@ -5,11 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Profile } from "@/entities/user";
 import { useAppForm } from "@/hooks/form";
 import { userProfileSchema } from "@/schema/register.schema";
+import { cn } from "@/utils/cn";
 import { SetStateAction } from "react";
 import { toast } from "sonner";
 import { updateUserProfile } from "../user-action";
 import { Views } from "./user-account-information";
-import { cn } from "@/utils/cn";
 
 const FORM_ID = "edit-user-profile-form";
 
@@ -29,7 +29,6 @@ export function EditUserProfile({ profile, setView }: UserProfileProps) {
     },
     validators: {
       onChange: userProfileSchema,
-      onChangeAsyncDebounceMs: 500,
       onSubmitAsync: async ({ value }) => {
         const result = await updateUserProfile(value);
 

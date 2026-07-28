@@ -8,7 +8,7 @@ export function LabelSection({ form }: { form: AppFormApi<AddAddressInput> }) {
       <p className="font-geologica capitalize font-medium text-neutral-500">
         Label
       </p>
-      <p className="mt-0.5 text-sm text-neutral-400">
+      <p className="mt-0.5 text-sm text-neutral-500">
         A short name to tell this address apart.
       </p>
       <div className="mt-3">
@@ -32,7 +32,7 @@ export function ContactSection<T extends Partial<AddAddressInput>>({
       <p className="font-geologica capitalize font-medium text-neutral-500">
         Contact
       </p>
-      <p className="mt-0.5 text-sm text-neutral-400">
+      <p className="mt-0.5 text-sm text-neutral-500">
         Who should the courier hand this to.
       </p>
       <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -69,7 +69,7 @@ export function ShippingAddressSection<T extends Partial<AddAddressInput>>({
       <p className="font-geologica capitalize font-medium text-neutral-500">
         Shipping address
       </p>
-      <p className="mt-0.5 text-sm text-neutral-400">
+      <p className="mt-0.5 text-sm text-neutral-500">
         Where should this order arrive.
       </p>
       <div className="mt-3 space-y-4">

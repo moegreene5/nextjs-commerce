@@ -9,7 +9,9 @@ export default function Modals() {
   const activeModalKeys = useModalStore(
     useShallow((s) =>
       Object.entries(s.modals)
-        .filter(([_, isOpen]) => isOpen)
+        .filter(([key, isOpen]) =>
+          key === "cart" ? "cart" in s.modals : isOpen,
+        )
         .map(([key]) => key as Modal),
     ),
   );
