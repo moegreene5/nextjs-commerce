@@ -22,6 +22,16 @@ export const getCart = cache(async (): Promise<GetCartResult> => {
   return getCartById(cartId);
 });
 
+export async function fetchCart() {
+  const result = await getCart();
+
+  if (!result.success) {
+    throw new Error(result.error || "Failed to fetch cart on server");
+  }
+
+  return result.cart;
+}
+
 export async function getCartById(
   cartId: string | null,
 ): Promise<GetCartResult> {

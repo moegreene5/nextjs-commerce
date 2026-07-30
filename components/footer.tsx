@@ -43,9 +43,6 @@ const Footer = () => {
               <Link href="/account">My Account</Link>
             </li>
             <li className="transition-transform duration-300 hover:scale-105 hover:text-black">
-              <Link href="/cart">Cart</Link>
-            </li>
-            <li className="transition-transform duration-300 hover:scale-105 hover:text-black">
               <Link href="/checkout">Checkout</Link>
             </li>
           </ul>

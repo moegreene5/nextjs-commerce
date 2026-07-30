@@ -7,7 +7,7 @@ import { ShoppingCart } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cartQueryOptions } from "../queries";
 
-export default function CartBadge() {
+export default function CartBadgeClient() {
   const pathname = usePathname();
   const data = useQuery(cartQueryOptions());
   const totalQuantity = data.data?.totalQuantity ?? 0;

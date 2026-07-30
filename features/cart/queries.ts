@@ -4,7 +4,6 @@ import { queryOptions } from "@tanstack/react-query";
 async function fetchCartClient(): Promise<Cart> {
   const response = await fetch("/api/cart", {
     headers: { "Content-Type": "application/json" },
-    cache: "no-store",
   });
 
   if (!response.ok) {

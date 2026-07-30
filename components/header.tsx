@@ -1,7 +1,9 @@
-import CartBadge from "@/features/cart/components/cart-badge";
+import CartBadgeClient from "@/features/cart/components/cart-badge-client";
+import CartHydrationBoundary from "@/features/cart/components/cart-hydration-boundary";
 import UserProfile, {
   UserProfileSkeleton,
 } from "@/features/user/components/user-profile";
+import { ShoppingCart } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -28,7 +30,11 @@ export default function Header() {
           {<UserProfile />}
         </Suspense>
 
-        <CartBadge />
+        <Suspense fallback={<ShoppingCart className="size-5" />}>
+          <CartHydrationBoundary>
+            <CartBadgeClient />
+          </CartHydrationBoundary>
+        </Suspense>
 
         <div className="relative">
           <ProductAddedAlert />
