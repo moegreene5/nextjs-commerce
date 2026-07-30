@@ -2,12 +2,13 @@
 
 import { ActionResult, SERVER_ERROR } from "@/entities/action";
 import { requireAuth } from "@/lib/auth";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { AppError } from "@/lib/errors";
 import { auth, collections, store } from "@/lib/firebase/admin";
 import { signInWithEmailPassword } from "@/lib/firebase/sign-in";
 import { ProfileData, userProfileSchema } from "@/schema/register.schema";
 import { Route } from "next";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 export async function updateUserProfile(
   data: ProfileData,
@@ -60,6 +61,7 @@ export async function updateUserProfile(
         updatedAt: new Date(),
       });
 
+    updateTag(CACHE_TAGS.profile(uid));
     revalidatePath("/account" as Route);
     return { success: true };
   } catch (err: unknown) {

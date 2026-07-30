@@ -2,6 +2,7 @@
 
 import { Address, AddressDocument, toAddress } from "@/entities/address";
 import { requireAuth } from "@/lib/auth";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { AppError } from "@/lib/errors";
 import { collections, store } from "@/lib/firebase/admin";
 import {
@@ -12,7 +13,7 @@ import {
 } from "@/schema/address.schema";
 import { Timestamp } from "firebase-admin/firestore";
 import { Route } from "next";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 const MAX_ADDRESSES = 4;
 
@@ -75,6 +76,7 @@ export async function addAddress(
       return toAddress(newDoc.id, data);
     });
 
+    updateTag(CACHE_TAGS.addresses(uid));
     revalidatePath("/account/addresses" as Route);
     return { success: true, address };
   } catch (error) {
@@ -131,6 +133,7 @@ export async function updateAddress(
       return toAddress(addressId, merged);
     });
 
+    updateTag(CACHE_TAGS.addresses(uid));
     revalidatePath("/account/addresses" as Route);
     return { success: true, address };
   } catch (error) {
@@ -163,6 +166,7 @@ export async function setDefaultAddress(
       });
     });
 
+    updateTag(CACHE_TAGS.addresses(uid));
     revalidatePath("/account/addresses" as Route);
     return { success: true };
   } catch (error) {
@@ -188,6 +192,7 @@ export async function removeAddress(addressId: string): Promise<SimpleResult> {
 
     await ref.delete();
 
+    updateTag(CACHE_TAGS.addresses(uid));
     revalidatePath("/account/addresses" as Route);
     return { success: true };
   } catch (error) {

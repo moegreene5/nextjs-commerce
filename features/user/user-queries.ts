@@ -1,9 +1,11 @@
 import "server-only";
 
 import { Profile } from "@/entities/user";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { collections, store } from "@/lib/firebase/admin";
 import { getUserFromSession } from "@/lib/session";
 import { normalizeProfileDoc } from "@/lib/user";
+import { cacheLife, cacheTag } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -14,6 +16,10 @@ export type User = Exclude<
 >;
 
 async function getUserProfile(userId: string): Promise<Profile | null> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(CACHE_TAGS.profile(userId));
+
   const docSnap = await store.collection(collections.profile).doc(userId).get();
 
   if (!docSnap.exists) return null;

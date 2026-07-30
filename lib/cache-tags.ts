@@ -6,4 +6,6 @@ export const CACHE_TAGS = {
   productExtras: "product-extras",
   relatedProducts: "related-products",
   product: (slug: string) => `product-${slug}`,
+  addresses: (userId: string) => `addresses-${userId}`,
+  profile: (userId: string) => `profile-${userId}`,
 } as const;
